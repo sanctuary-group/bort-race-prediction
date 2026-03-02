@@ -91,16 +91,16 @@ function getUserHeader() {
             <span class="text-lg sm:text-xl font-bold text-gold-gradient font-heading">BOAT</span>
             <span class="text-lg sm:text-xl font-bold text-cream font-heading">PREDICTOR</span>
           </a>
-          <nav class="flex items-center space-x-3 sm:space-x-6">
+          <nav class="flex items-center space-x-4 sm:space-x-6">
             <a href="predict.html" class="text-warm-text/80 hover:text-cream transition-all duration-400 flex items-center gap-1.5 text-sm">
-              <i class="fa-solid fa-chart-line"></i><span class="hidden sm:inline">予測</span>
+              <i class="fa-solid fa-chart-line text-lg sm:text-sm"></i><span class="hidden sm:inline">予測</span>
             </a>
             <a href="weekly.html" class="text-warm-text/80 hover:text-cream transition-all duration-400 flex items-center gap-1.5 text-sm">
-              <i class="fa-solid fa-calendar-week"></i><span class="hidden sm:inline">今週の一覧</span>
+              <i class="fa-solid fa-calendar-week text-lg sm:text-sm"></i><span class="hidden sm:inline">今週の一覧</span>
             </a>
             ${getThemeToggleBtn()}
             <a href="login.html" class="text-warm-gray/60 hover:text-status-error transition-all duration-400 flex items-center gap-1.5 text-sm">
-              <i class="fa-solid fa-right-from-bracket"></i>
+              <i class="fa-solid fa-right-from-bracket text-lg sm:text-sm"></i>
             </a>
           </nav>
         </div>

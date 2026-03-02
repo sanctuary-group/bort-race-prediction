@@ -323,24 +323,39 @@
       });
     }
 
-    // スワイプ対応
+    // スワイプ対応（ドラッグ追従付き）
     function initSwipe() {
       const viewport = document.getElementById('carousel-viewport');
-      let startX = 0, startTime = 0, deltaX = 0;
+      const track = document.getElementById('carousel-track');
+      let startX = 0, startTime = 0, deltaX = 0, dragging = false;
+
       viewport.addEventListener('touchstart', function(e) {
         startX = e.touches[0].clientX;
         startTime = Date.now();
         deltaX = 0;
+        dragging = true;
+        track.style.transition = 'none';
       }, { passive: true });
+
       viewport.addEventListener('touchmove', function(e) {
+        if (!dragging) return;
         deltaX = e.touches[0].clientX - startX;
+        const baseOffset = -currentSlide * 100;
+        const dragPercent = (deltaX / viewport.offsetWidth) * 100;
+        track.style.transform = `translateX(${baseOffset + dragPercent}%)`;
       }, { passive: true });
+
       viewport.addEventListener('touchend', function() {
+        if (!dragging) return;
+        dragging = false;
+        track.style.transition = '';
         const elapsed = Date.now() - startTime;
         const velocity = Math.abs(deltaX) / elapsed;
         const threshold = velocity > 0.3 ? 20 : 50;
         if (Math.abs(deltaX) > threshold) {
           deltaX < 0 ? nextSlide() : prevSlide();
+        } else {
+          updateCarousel();
         }
         deltaX = 0;
       });

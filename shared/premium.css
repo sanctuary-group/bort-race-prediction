@@ -342,6 +342,13 @@ select.input-premium {
   padding-right: 2.5rem;
 }
 
+/* iOS date input正規化 */
+input[type="date"].input-premium {
+  -webkit-appearance: none;
+  appearance: none;
+  line-height: 1.25;
+}
+
 /* --- Premium Table System --- */
 .table-premium {
   width: 100%;

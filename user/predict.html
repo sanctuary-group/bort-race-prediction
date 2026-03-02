@@ -23,24 +23,24 @@
       <h2 class="text-xs font-semibold uppercase tracking-widest text-warm-gray/80 mb-4">
         <i class="fa-solid fa-sliders mr-1"></i>レース選択
       </h2>
-      <div class="flex flex-wrap gap-3 items-end">
+      <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 items-end">
         <!-- 日付 -->
         <div>
           <label class="block text-xs text-warm-gray mb-1">日付</label>
           <input type="date" id="race-date" value="2026-02-23"
-            class="input-premium text-sm">
+            class="input-premium text-sm w-full">
         </div>
         <!-- レース場 -->
         <div>
           <label class="block text-xs text-warm-gray mb-1">レース場</label>
           <select id="race-stadium"
-            class="input-premium text-sm min-w-[120px]">
+            class="input-premium text-sm w-full sm:min-w-[120px]">
           </select>
         </div>
         <!-- レース番号 -->
-        <div class="flex-1 min-w-0">
+        <div class="col-span-2 sm:flex-1 sm:min-w-0">
           <label class="block text-xs text-warm-gray mb-1">レース</label>
-          <div class="flex flex-wrap gap-1.5" id="race-tabs">
+          <div class="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide" id="race-tabs">
           </div>
         </div>
       </div>
@@ -175,14 +175,14 @@
         const btn = document.createElement('button');
         btn.textContent = i + 'R';
         btn.className = i === 1
-          ? 'px-3.5 py-2 rounded-lg text-sm font-semibold bg-gold text-charcoal shadow-elevation-1 transition-all duration-600 ease-premium'
-          : 'px-3.5 py-2 rounded-lg text-sm font-medium text-warm-gray hover:bg-dark-surface hover:text-charcoal transition-all duration-400';
+          ? 'px-3 py-2 rounded-lg text-sm font-semibold bg-gold text-charcoal shadow-elevation-1 transition-all duration-600 ease-premium flex-shrink-0'
+          : 'px-3 py-2 rounded-lg text-sm font-medium text-warm-gray hover:bg-dark-surface hover:text-charcoal transition-all duration-400 flex-shrink-0';
         btn.addEventListener('click', () => {
           selectedRace = i;
           document.querySelectorAll('#race-tabs button').forEach(b => {
-            b.className = 'px-3.5 py-2 rounded-lg text-sm font-medium text-warm-gray hover:bg-dark-surface hover:text-charcoal transition-all duration-400';
+            b.className = 'px-3 py-2 rounded-lg text-sm font-medium text-warm-gray hover:bg-dark-surface hover:text-charcoal transition-all duration-400 flex-shrink-0';
           });
-          btn.className = 'px-3.5 py-2 rounded-lg text-sm font-semibold bg-gold text-charcoal shadow-elevation-1 transition-all duration-600 ease-premium';
+          btn.className = 'px-3 py-2 rounded-lg text-sm font-semibold bg-gold text-charcoal shadow-elevation-1 transition-all duration-600 ease-premium flex-shrink-0';
           renderRaceTable();
           if (selectedLogic) showPrediction(selectedLogic);
         });

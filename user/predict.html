@@ -92,8 +92,8 @@
           <i class="fa-solid fa-chevron-right text-lg"></i>
         </button>
         <!-- カルーセル本体 -->
-        <div class="overflow-hidden rounded-2xl relative" id="carousel-viewport">
-          <div class="flex transition-transform duration-300 ease-out" id="carousel-track">
+        <div class="overflow-hidden rounded-2xl relative" id="carousel-viewport" style="touch-action: pan-y;">
+          <div class="flex transition-transform duration-300 ease-out will-change-transform" id="carousel-track">
           </div>
           <!-- スワイプヒント -->
           <div id="swipe-hint" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm rounded-2xl cursor-pointer transition-opacity duration-500" style="display:none;">
@@ -403,14 +403,13 @@
           }
         }
         if (!dragging) return;
-        if (isHorizontal) e.preventDefault();
         deltaX = dx;
         if (rafId) return;
         rafId = requestAnimationFrame(() => {
           trackEl.style.transform = `translateX(${(-virtualIndex * 100) + (deltaX / vpWidth) * 100}%)`;
           rafId = null;
         });
-      }, { passive: false });
+      }, { passive: true });
 
       viewport.addEventListener('touchend', function() {
         if (!dragging) return;

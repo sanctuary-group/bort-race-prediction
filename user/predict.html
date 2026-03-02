@@ -369,6 +369,11 @@
       let dragging = false, dirLocked = false, isHorizontal = false;
       let rafId = null;
 
+      // ドラッグ中はボケ玉アニメーションを一時停止してGPU負荷を軽減
+      const bokehEls = document.querySelectorAll('.page-bokeh, .page-bokeh-sm, .page-bokeh-bright, .header-sparkle, .header-sparkle-lg, .header-sparkle-bright');
+      function pauseBokeh() { bokehEls.forEach(el => { el.style.animationPlayState = 'paused'; }); }
+      function resumeBokeh() { bokehEls.forEach(el => { el.style.animationPlayState = ''; }); }
+
       function endDrag() {
         dragging = false;
         dirLocked = false;
@@ -376,6 +381,7 @@
         trackEl.style.transition = '';
         if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
         deltaX = 0;
+        resumeBokeh();
       }
 
       viewport.addEventListener('touchstart', function(e) {
@@ -400,6 +406,7 @@
           if (isHorizontal) {
             dragging = true;
             trackEl.style.transition = 'none';
+            pauseBokeh();
           }
         }
         if (!dragging) return;

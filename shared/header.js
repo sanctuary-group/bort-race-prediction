@@ -86,43 +86,24 @@ function getUserHeader() {
     <header class="header-premium sticky top-0 z-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
-          <a href="../index.html" class="flex items-center gap-2">
-            <i class="fa-solid fa-ship text-gold-shine text-xl"></i>
-            <span class="text-xl font-bold text-gold-gradient font-heading">BOAT</span>
-            <span class="text-xl font-bold text-cream font-heading">PREDICTOR</span>
+          <a href="../index.html" class="flex items-center gap-1.5 sm:gap-2">
+            <i class="fa-solid fa-ship text-gold-shine text-lg sm:text-xl"></i>
+            <span class="text-lg sm:text-xl font-bold text-gold-gradient font-heading">BOAT</span>
+            <span class="text-lg sm:text-xl font-bold text-cream font-heading">PREDICTOR</span>
           </a>
-          <nav class="hidden md:flex items-center space-x-6">
-            <a href="predict.html" class="text-warm-text/80 hover:text-cream transition-all duration-400 flex items-center gap-2 text-sm">
-              <i class="fa-solid fa-chart-line"></i>予測
+          <nav class="flex items-center space-x-3 sm:space-x-6">
+            <a href="predict.html" class="text-warm-text/80 hover:text-cream transition-all duration-400 flex items-center gap-1.5 text-sm">
+              <i class="fa-solid fa-chart-line"></i><span class="hidden sm:inline">予測</span>
             </a>
-            <a href="weekly.html" class="text-warm-text/80 hover:text-cream transition-all duration-400 flex items-center gap-2 text-sm">
-              <i class="fa-solid fa-calendar-week"></i>今週の一覧
+            <a href="weekly.html" class="text-warm-text/80 hover:text-cream transition-all duration-400 flex items-center gap-1.5 text-sm">
+              <i class="fa-solid fa-calendar-week"></i><span class="hidden sm:inline">今週の一覧</span>
             </a>
             ${getThemeToggleBtn()}
-            <a href="login.html" class="text-warm-gray/60 hover:text-status-error transition-all duration-400 flex items-center gap-2 text-sm">
-              <i class="fa-solid fa-right-from-bracket"></i>ログアウト
+            <a href="login.html" class="text-warm-gray/60 hover:text-status-error transition-all duration-400 flex items-center gap-1.5 text-sm">
+              <i class="fa-solid fa-right-from-bracket"></i>
             </a>
           </nav>
-          <div class="flex items-center gap-2 md:hidden">
-            <button onclick="toggleTheme()" class="theme-toggle-btn theme-toggle-icon" title="テーマ切替">
-              <i class="fa-solid fa-sun text-base"></i>
-            </button>
-            <button id="mobile-menu-btn" class="text-warm-text/80 hover:text-cream p-2 transition-all duration-400">
-              <i class="fa-solid fa-bars text-xl"></i>
-            </button>
-          </div>
         </div>
-        <nav id="mobile-menu" class="hidden md:hidden pb-4 space-y-1" style="transition: max-height 0.4s ease, opacity 0.4s ease;">
-          <a href="predict.html" class="block px-4 py-2.5 rounded-xl text-warm-text/80 hover:bg-dark-surface hover:text-cream transition-all duration-400">
-            <i class="fa-solid fa-chart-line mr-2"></i>予測
-          </a>
-          <a href="weekly.html" class="block px-4 py-2.5 rounded-xl text-warm-text/80 hover:bg-dark-surface hover:text-cream transition-all duration-400">
-            <i class="fa-solid fa-calendar-week mr-2"></i>今週の一覧
-          </a>
-          <a href="login.html" class="block px-4 py-2.5 rounded-xl text-warm-gray/60 hover:bg-dark-surface hover:text-status-error transition-all duration-400">
-            <i class="fa-solid fa-right-from-bracket mr-2"></i>ログアウト
-          </a>
-        </nav>
       </div>
       <div class="header-sparkles"></div>
     </header>`;

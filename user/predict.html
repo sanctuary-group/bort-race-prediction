@@ -23,7 +23,7 @@
       <h2 class="text-xs font-semibold uppercase tracking-widest text-warm-gray/80 mb-4">
         <i class="fa-solid fa-sliders mr-1"></i>レース選択
       </h2>
-      <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 items-end">
+      <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-3 items-end">
         <!-- 日付 -->
         <div>
           <label class="block text-xs text-warm-gray mb-1">日付</label>
@@ -93,7 +93,7 @@
         </button>
         <!-- カルーセル本体 -->
         <div class="overflow-hidden rounded-2xl relative" id="carousel-viewport">
-          <div class="flex transition-transform duration-500 ease-premium" id="carousel-track">
+          <div class="flex transition-transform duration-300 ease-premium" id="carousel-track">
           </div>
           <!-- スワイプヒント -->
           <div id="swipe-hint" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm rounded-2xl cursor-pointer transition-opacity duration-500" style="display:none;">
@@ -153,14 +153,14 @@
         const btn = document.createElement('button');
         btn.textContent = i + 'R';
         btn.className = i === 1
-          ? 'px-3 py-2 rounded-lg text-sm font-semibold bg-gold text-charcoal shadow-elevation-1 transition-all duration-600 ease-premium flex-shrink-0'
-          : 'px-3 py-2 rounded-lg text-sm font-medium text-warm-gray hover:bg-dark-surface hover:text-charcoal transition-all duration-400 flex-shrink-0';
+          ? 'px-3 py-2.5 rounded-lg text-xs font-semibold bg-gold text-charcoal shadow-elevation-1 transition-all duration-600 ease-premium flex-shrink-0'
+          : 'px-3 py-2.5 rounded-lg text-xs font-medium text-warm-gray hover:bg-dark-surface hover:text-charcoal transition-all duration-400 flex-shrink-0';
         btn.addEventListener('click', () => {
           selectedRace = i;
           document.querySelectorAll('#race-tabs button').forEach(b => {
-            b.className = 'px-3 py-2 rounded-lg text-sm font-medium text-warm-gray hover:bg-dark-surface hover:text-charcoal transition-all duration-400 flex-shrink-0';
+            b.className = 'px-3 py-2.5 rounded-lg text-xs font-medium text-warm-gray hover:bg-dark-surface hover:text-charcoal transition-all duration-400 flex-shrink-0';
           });
-          btn.className = 'px-3 py-2 rounded-lg text-sm font-semibold bg-gold text-charcoal shadow-elevation-1 transition-all duration-600 ease-premium flex-shrink-0';
+          btn.className = 'px-3 py-2.5 rounded-lg text-xs font-semibold bg-gold text-charcoal shadow-elevation-1 transition-all duration-600 ease-premium flex-shrink-0';
           renderRaceTable();
           initCarousel();
         });
@@ -326,11 +326,20 @@
     // スワイプ対応
     function initSwipe() {
       const viewport = document.getElementById('carousel-viewport');
-      let startX = 0, deltaX = 0;
-      viewport.addEventListener('touchstart', function(e) { startX = e.touches[0].clientX; deltaX = 0; }, { passive: true });
-      viewport.addEventListener('touchmove', function(e) { deltaX = e.touches[0].clientX - startX; }, { passive: true });
+      let startX = 0, startTime = 0, deltaX = 0;
+      viewport.addEventListener('touchstart', function(e) {
+        startX = e.touches[0].clientX;
+        startTime = Date.now();
+        deltaX = 0;
+      }, { passive: true });
+      viewport.addEventListener('touchmove', function(e) {
+        deltaX = e.touches[0].clientX - startX;
+      }, { passive: true });
       viewport.addEventListener('touchend', function() {
-        if (Math.abs(deltaX) > 50) {
+        const elapsed = Date.now() - startTime;
+        const velocity = Math.abs(deltaX) / elapsed;
+        const threshold = velocity > 0.3 ? 20 : 50;
+        if (Math.abs(deltaX) > threshold) {
           deltaX < 0 ? nextSlide() : prevSlide();
         }
         deltaX = 0;

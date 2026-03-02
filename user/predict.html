@@ -123,7 +123,7 @@
     let selectedRace = 1;
     let currentSlide = 0;
     let virtualIndex = 1;
-    let transitioning = false;
+    let trackEl, dotsEls;
 
     // 初期化
     document.addEventListener('DOMContentLoaded', function () {
@@ -222,13 +222,12 @@
         `).join('');
 
       const detailId = isClone ? `analysis-detail-clone-${i}` : `analysis-detail-${i}`;
-      const iconId = isClone ? `analysis-icon-clone-${i}` : `analysis-icon-${i}`;
       const toggleBtn = isClone
         ? `<span class="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-warm-gray/70 mb-3">
                     <i class="fa-solid fa-chevron-down text-xs"></i>分析詳細
                   </span>`
         : `<button onclick="toggleAnalysis(${i})" class="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-warm-gray/70 hover:text-charcoal transition-all duration-400 mb-3">
-                    <i class="fa-solid fa-chevron-down text-xs" id="${iconId}"></i>分析詳細
+                    <i class="fa-solid fa-chevron-down text-xs" id="analysis-icon-${i}"></i>分析詳細
                   </button>`;
 
       return `
@@ -300,8 +299,8 @@
     }
 
     function initCarousel() {
-      const track = document.getElementById('carousel-track');
-      const dots = document.getElementById('carousel-dots');
+      trackEl = document.getElementById('carousel-track');
+      const dotsContainer = document.getElementById('carousel-dots');
       const total = DUMMY_LOGICS.length;
 
       // 実スライドHTML
@@ -309,17 +308,27 @@
       // クローン: 末尾（C）を先頭に、先頭（A）を末尾に追加してループを実現
       const firstClone = buildSlideHTML(DUMMY_LOGICS[0], 0, true);
       const lastClone = buildSlideHTML(DUMMY_LOGICS[total - 1], total - 1, true);
-      track.innerHTML = lastClone + realSlides + firstClone;
+      trackEl.innerHTML = lastClone + realSlides + firstClone;
 
       // virtualIndex=1 が実スライドの先頭（A）
       currentSlide = 0;
       virtualIndex = 1;
 
-      dots.innerHTML = DUMMY_LOGICS.map((_, i) =>
+      dotsContainer.innerHTML = DUMMY_LOGICS.map((_, i) =>
         `<button onclick="goToSlide(${i})" class="w-2.5 h-2.5 rounded-full bg-dark-surface/60 transition-all duration-400" data-dot="${i}"></button>`
       ).join('');
+      dotsEls = dotsContainer.querySelectorAll('button');
 
       updateCarousel();
+    }
+
+    function doWrapTransition(newIdx) {
+      setTimeout(() => {
+        trackEl.style.transition = 'none';
+        virtualIndex = newIdx;
+        updateCarousel();
+        requestAnimationFrame(() => { trackEl.style.transition = ''; });
+      }, 310);
     }
 
     function goToSlide(index) {
@@ -328,42 +337,23 @@
       updateCarousel();
     }
     function prevSlide() {
-      if (transitioning) return;
-      const track = document.getElementById('carousel-track');
+      if (virtualIndex < 1) return;
       currentSlide = (currentSlide - 1 + DUMMY_LOGICS.length) % DUMMY_LOGICS.length;
       virtualIndex--;
       updateCarousel();
-      if (virtualIndex <= 0) {
-        transitioning = true;
-        setTimeout(() => {
-          track.style.transition = 'none';
-          virtualIndex = DUMMY_LOGICS.length;
-          updateCarousel();
-          requestAnimationFrame(() => { track.style.transition = ''; transitioning = false; });
-        }, 310);
-      }
+      if (virtualIndex <= 0) doWrapTransition(DUMMY_LOGICS.length);
     }
     function nextSlide() {
-      if (transitioning) return;
-      const track = document.getElementById('carousel-track');
+      if (virtualIndex > DUMMY_LOGICS.length) return;
       currentSlide = (currentSlide + 1) % DUMMY_LOGICS.length;
       virtualIndex++;
       updateCarousel();
-      if (virtualIndex >= DUMMY_LOGICS.length + 1) {
-        transitioning = true;
-        setTimeout(() => {
-          track.style.transition = 'none';
-          virtualIndex = 1;
-          updateCarousel();
-          requestAnimationFrame(() => { track.style.transition = ''; transitioning = false; });
-        }, 310);
-      }
+      if (virtualIndex >= DUMMY_LOGICS.length + 1) doWrapTransition(1);
     }
 
     function updateCarousel() {
-      const track = document.getElementById('carousel-track');
-      track.style.transform = `translateX(-${virtualIndex * 100}%)`;
-      document.querySelectorAll('#carousel-dots button').forEach((dot, i) => {
+      trackEl.style.transform = `translateX(-${virtualIndex * 100}%)`;
+      dotsEls.forEach((dot, i) => {
         dot.className = i === currentSlide
           ? 'w-3 h-3 rounded-full bg-gold transition-all duration-400'
           : 'w-2.5 h-2.5 rounded-full bg-dark-surface/60 transition-all duration-400';
@@ -373,16 +363,24 @@
     // スワイプ対応（方向検出+ドラッグ追従）
     function initSwipe() {
       const viewport = document.getElementById('carousel-viewport');
-      const track = document.getElementById('carousel-track');
-      track.style.willChange = 'transform';
       let vpWidth = viewport.offsetWidth;
       window.addEventListener('resize', () => { vpWidth = viewport.offsetWidth; });
       let startX = 0, startY = 0, startTime = 0, deltaX = 0;
       let dragging = false, dirLocked = false, isHorizontal = false;
+      let rafId = null;
+
+      function endDrag() {
+        dragging = false;
+        dirLocked = false;
+        isHorizontal = false;
+        trackEl.style.transition = '';
+        if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+        deltaX = 0;
+      }
 
       viewport.addEventListener('touchstart', function(e) {
-        if (transitioning) return;
-        track.style.transition = 'none';
+        if (virtualIndex < 1 || virtualIndex > DUMMY_LOGICS.length) return;
+        trackEl.style.transition = 'none';
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         startTime = Date.now();
@@ -401,40 +399,38 @@
           isHorizontal = Math.abs(dx) > Math.abs(dy);
           if (isHorizontal) {
             dragging = true;
-            track.style.transition = 'none';
+            trackEl.style.transition = 'none';
           }
         }
         if (!dragging) return;
+        if (isHorizontal) e.preventDefault();
         deltaX = dx;
-        const baseOffset = -virtualIndex * 100;
-        const dragPercent = (deltaX / vpWidth) * 100;
-        track.style.transform = `translateX(${baseOffset + dragPercent}%)`;
-      }, { passive: true });
+        if (rafId) return;
+        rafId = requestAnimationFrame(() => {
+          trackEl.style.transform = `translateX(${(-virtualIndex * 100) + (deltaX / vpWidth) * 100}%)`;
+          rafId = null;
+        });
+      }, { passive: false });
 
       viewport.addEventListener('touchend', function() {
         if (!dragging) return;
-        dragging = false;
-        dirLocked = false;
-        track.style.transition = '';
         const elapsed = Date.now() - startTime;
         const velocity = Math.abs(deltaX) / elapsed;
         const threshold = velocity > 0.3 ? 20 : 50;
-        if (Math.abs(deltaX) > threshold) {
-          deltaX < 0 ? nextSlide() : prevSlide();
+        const dir = deltaX;
+        endDrag();
+        if (Math.abs(dir) > threshold) {
+          dir < 0 ? nextSlide() : prevSlide();
         } else {
           updateCarousel();
         }
-        deltaX = 0;
       });
 
       // タッチキャンセル（iOS端ジェスチャー等）
       viewport.addEventListener('touchcancel', function() {
         if (!dragging) return;
-        dragging = false;
-        dirLocked = false;
-        track.style.transition = '';
         updateCarousel();
-        deltaX = 0;
+        endDrag();
       });
     }
 

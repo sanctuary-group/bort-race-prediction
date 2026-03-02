@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', function () {
   if (isLoginPage || isIndex) {
     headerEl.innerHTML = getMinimalHeader(isAdmin);
     initHeaderSparkles();
-    initPageBokeh();
     updateToggleIcon();
     return;
   }
@@ -29,7 +28,6 @@ document.addEventListener('DOMContentLoaded', function () {
   headerEl.innerHTML = isAdmin ? getAdminHeader() : getUserHeader();
   initMobileMenu();
   initHeaderSparkles();
-  initPageBokeh();
   updateToggleIcon();
 });
 

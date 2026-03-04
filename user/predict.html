@@ -11,6 +11,12 @@
   <script src="../shared/tailwind-config.js"></script>
   <link rel="stylesheet" href="../shared/premium.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    #carousel-track.is-dragging .prediction-star,
+    #carousel-track.is-dragging .prediction-glitter {
+      animation-play-state: paused;
+    }
+  </style>
 </head>
 <body class="bg-dark text-charcoal font-body min-h-screen flex flex-col bg-pattern-subtle">
 
@@ -399,8 +405,14 @@
 
       // ドラッグ中はボケ玉アニメーションを一時停止してGPU負荷を軽減
       const bokehEls = document.querySelectorAll('.header-sparkle, .header-sparkle-lg, .header-sparkle-bright');
-      function pauseBokeh() { bokehEls.forEach(el => { el.style.animationPlayState = 'paused'; }); }
-      function resumeBokeh() { bokehEls.forEach(el => { el.style.animationPlayState = ''; }); }
+      function pauseBokeh() {
+        trackEl.classList.add('is-dragging');
+        bokehEls.forEach(el => { el.style.animationPlayState = 'paused'; });
+      }
+      function resumeBokeh() {
+        trackEl.classList.remove('is-dragging');
+        bokehEls.forEach(el => { el.style.animationPlayState = ''; });
+      }
 
       function endDrag() {
         dragging = false;

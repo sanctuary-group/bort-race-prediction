@@ -66,8 +66,8 @@ function getMinimalHeader(isAdmin) {
           <div class="flex-1"></div>
           <a href="${isAdmin ? '../index.html' : '../index.html'}" class="flex items-center gap-2">
             <i class="fa-solid fa-ship text-gold-shine text-xl"></i>
-            <span class="text-xl font-bold text-gold-gradient font-heading">BOAT</span>
-            <span class="text-xl font-bold text-cream font-heading">PREDICTOR</span>
+            <span class="text-xl font-bold text-gold-gradient font-heading">GOLD</span>
+            <span class="text-xl font-bold text-cream font-heading">WAVE</span>
             ${isAdmin ? '<span class="text-[0.625rem] font-bold text-gold-light ml-2 px-2 py-0.5 bg-gold/10 rounded-md tracking-wider">ADMIN</span>' : ''}
           </a>
           <div class="flex-1 flex justify-end">
@@ -86,8 +86,8 @@ function getUserHeader() {
         <div class="flex items-center justify-between h-16">
           <a href="../index.html" class="flex items-center gap-1.5 sm:gap-2">
             <i class="fa-solid fa-ship text-gold-shine text-lg sm:text-xl"></i>
-            <span class="text-lg sm:text-xl font-bold text-gold-gradient font-heading">BOAT</span>
-            <span class="text-lg sm:text-xl font-bold text-cream font-heading">PREDICTOR</span>
+            <span class="text-lg sm:text-xl font-bold text-gold-gradient font-heading">GOLD</span>
+            <span class="text-lg sm:text-xl font-bold text-cream font-heading">WAVE</span>
           </a>
           <nav class="flex items-center space-x-4 sm:space-x-6">
             <a href="predict.html" class="text-warm-text/80 hover:text-cream transition-all duration-400 flex items-center gap-1.5 text-sm">
@@ -114,8 +114,8 @@ function getAdminHeader() {
         <div class="flex items-center justify-between h-16">
           <a href="../index.html" class="flex items-center gap-2">
             <i class="fa-solid fa-ship text-gold-shine text-xl"></i>
-            <span class="text-xl font-bold text-gold-gradient font-heading">BOAT</span>
-            <span class="text-xl font-bold text-cream font-heading">PREDICTOR</span>
+            <span class="text-xl font-bold text-gold-gradient font-heading">GOLD</span>
+            <span class="text-xl font-bold text-cream font-heading">WAVE</span>
             <span class="text-[0.625rem] font-bold text-gold-light ml-2 px-2 py-0.5 bg-gold/10 rounded-md tracking-wider">ADMIN</span>
           </a>
           <nav class="hidden md:flex items-center space-x-6">

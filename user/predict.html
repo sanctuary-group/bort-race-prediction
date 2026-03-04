@@ -316,7 +316,7 @@
       virtualIndex = 1;
 
       dotsContainer.innerHTML = DUMMY_LOGICS.map((_, i) =>
-        `<button onclick="goToSlide(${i})" class="w-2.5 h-2.5 rounded-full bg-dark-surface/60 transition-all duration-400" data-dot="${i}"></button>`
+        `<button onclick="goToSlide(${i})" class="w-3 h-3 rounded-full bg-gold/30 transition-all duration-400" data-dot="${i}"></button>`
       ).join('');
       dotsEls = dotsContainer.querySelectorAll('button');
 
@@ -357,8 +357,8 @@
       trackEl.style.transform = `translateX(-${virtualIndex * 100}%)`;
       dotsEls.forEach((dot, i) => {
         dot.className = i === currentSlide
-          ? 'w-3 h-3 rounded-full bg-gold transition-all duration-400'
-          : 'w-2.5 h-2.5 rounded-full bg-dark-surface/60 transition-all duration-400';
+          ? 'w-3.5 h-3.5 rounded-full bg-gold shadow-[0_0_6px_rgba(176,154,92,0.5)] transition-all duration-400'
+          : 'w-3 h-3 rounded-full bg-gold/30 transition-all duration-400';
       });
     }
 

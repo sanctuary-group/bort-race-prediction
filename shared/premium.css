@@ -1,6 +1,6 @@
 /* ========================================
    BOAT PREDICTOR - Premium Design System
-   Dark/Light Mode with CSS Custom Properties
+   Dark Mode with CSS Custom Properties
    ======================================== */
 
 /* --- Theme Variables (Dark Mode = Default) --- */
@@ -45,47 +45,6 @@
   --pattern-glow-3: rgba(176, 154, 92, 0.03);
 }
 
-/* --- Light Mode Variables --- */
-body.light-mode {
-  --bg-primary: #f7f3ea;
-  --bg-card: #ffffff;
-  --bg-surface: #f0ebe0;
-  --bg-input: #f5f1e8;
-  --bg-input-focus: #ffffff;
-  --text-primary: #2e2a20;
-  --text-secondary: #5d5648;
-  --text-muted: #8a8070;
-  --border-gold: rgba(176, 154, 92, 0.18);
-  --border-gold-hover: rgba(176, 154, 92, 0.3);
-  --border-gold-accent: rgba(176, 154, 92, 0.2);
-  --border-gold-line: rgba(176, 154, 92, 0.3);
-  --border-gold-btn: rgba(176, 154, 92, 0.4);
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
-  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.08), 0 0 16px rgba(176, 154, 92, 0.06);
-  --shadow-input: inset 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-btn-primary: 0 2px 8px rgba(176, 154, 92, 0.25);
-  --shadow-btn-primary-hover: 0 8px 24px rgba(176, 154, 92, 0.3);
-  --shadow-focus-ring: 0 0 0 2px #f7f3ea, 0 0 0 4px rgba(176, 154, 92, 0.4);
-  --ghost-hover-bg: rgba(176, 154, 92, 0.08);
-  --scrollbar-track: #f0ebe0;
-  --scrollbar-thumb: #c4b578;
-  --scrollbar-thumb-hover: #b09a5c;
-  --selection-bg: rgba(176, 154, 92, 0.25);
-  --selection-text: #2e2a20;
-  --range-track: #e0d8c8;
-  --bokeh-opacity: 0.4;
-  --table-header-bg-from: #f0ebe0;
-  --table-header-bg-to: #f7f3ea;
-  --table-row-hover-edge: rgba(176, 154, 92, 0.03);
-  --table-row-hover-mid: rgba(176, 154, 92, 0.06);
-  --table-border: rgba(176, 154, 92, 0.12);
-  --btn-secondary-hover-bg: rgba(176, 154, 92, 0.08);
-  --btn-secondary-hover-ring: rgba(176, 154, 92, 0.08);
-  --pattern-dot: rgba(176, 154, 92, 0.04);
-  --pattern-glow-1: rgba(176, 154, 92, 0.06);
-  --pattern-glow-2: rgba(176, 154, 92, 0.04);
-  --pattern-glow-3: rgba(176, 154, 92, 0.02);
-}
 
 /* --- Gradient Utilities --- */
 .text-gold-gradient {
@@ -111,27 +70,6 @@ body.light-mode {
   background-clip: text;
 }
 
-/* Light mode: deeper gold for readability on light bg */
-body.light-mode .text-gold-gradient {
-  background: linear-gradient(135deg, #8d7d3f 0%, #b09a5c 50%, #8d7d3f 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-body.light-mode .text-gold-shine {
-  background: linear-gradient(160deg, #a08e52 0%, #c4b06a 40%, #b09a5c 60%, #8d7d3f 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-body.light-mode .text-gold-warm {
-  background: linear-gradient(135deg, #a08e52 0%, #c4b06a 45%, #8d7d3f 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
 
 .bg-gold-gradient {
   background: linear-gradient(135deg, #b09a5c 0%, #d4c28a 50%, #a8913e 100%);
@@ -251,11 +189,7 @@ body.light-mode .text-gold-warm {
   background: linear-gradient(90deg, transparent 0%, rgba(176, 154, 92, 0.3) 50%, transparent 100%);
 }
 
-body.light-mode .prediction-order-box {
-  background: radial-gradient(ellipse at center, rgba(176, 154, 92, 0.06) 0%, transparent 70%),
-              linear-gradient(180deg, rgba(176, 154, 92, 0.04) 0%, transparent 100%);
-  box-shadow: inset 0 0 30px rgba(176, 154, 92, 0.04), 0 4px 16px rgba(0, 0, 0, 0.06);
-}
+
 
 /* --- Prediction Sparkles (予想着順キラキラ) --- */
 .prediction-sparkles {
@@ -375,9 +309,6 @@ body.light-mode .prediction-order-box {
   text-decoration: none;
 }
 
-body.light-mode .btn-secondary {
-  color: #8d7d3f;
-}
 
 .btn-secondary:hover {
   border-color: #b09a5c;
@@ -386,9 +317,6 @@ body.light-mode .btn-secondary {
   box-shadow: 0 0 0 4px var(--btn-secondary-hover-ring);
 }
 
-body.light-mode .btn-secondary:hover {
-  color: #8d7d3f;
-}
 
 .btn-ghost {
   display: inline-flex;
@@ -410,9 +338,6 @@ body.light-mode .btn-secondary:hover {
   color: #d4c28a;
 }
 
-body.light-mode .btn-ghost:hover {
-  color: #8d7d3f;
-}
 
 /* --- Premium Input System --- */
 .input-premium {
@@ -758,27 +683,3 @@ input[type="range"]::-webkit-slider-thumb:hover {
   animation: fadeInUp 0.8s ease-out 0.2s forwards;
 }
 
-/* --- Theme Toggle Button --- */
-.theme-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 0.625rem;
-  background: transparent;
-  border: 1px solid var(--border-gold);
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.theme-toggle-btn:hover {
-  background: var(--ghost-hover-bg);
-  color: #d4c28a;
-  border-color: var(--border-gold-hover);
-}
-
-body.light-mode .theme-toggle-btn:hover {
-  color: #8d7d3f;
-}

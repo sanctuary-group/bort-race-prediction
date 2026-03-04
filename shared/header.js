@@ -2,12 +2,6 @@
 // 共通ヘッダー/ナビゲーション動的挿入
 // ========================================
 
-// テーマ初期化（FOUC防止のため最速で実行）
-(function() {
-  const saved = localStorage.getItem('bp-theme');
-  if (saved === 'light') document.body.classList.add('light-mode');
-})();
-
 document.addEventListener('DOMContentLoaded', function () {
   const headerEl = document.getElementById('app-header');
   if (!headerEl) return;
@@ -21,42 +15,13 @@ document.addEventListener('DOMContentLoaded', function () {
   if (isLoginPage || isIndex) {
     headerEl.innerHTML = getMinimalHeader(isAdmin);
     initHeaderSparkles();
-    updateToggleIcon();
     return;
   }
 
   headerEl.innerHTML = isAdmin ? getAdminHeader() : getUserHeader();
   initMobileMenu();
   initHeaderSparkles();
-  updateToggleIcon();
 });
-
-// テーマトグルボタンHTML
-function getThemeToggleBtn() {
-  return `<button id="theme-toggle" onclick="toggleTheme()" class="theme-toggle-btn" title="テーマ切替">
-    <i class="fa-solid fa-sun text-base"></i>
-  </button>`;
-}
-
-// テーマ切替
-function toggleTheme() {
-  const isLight = document.body.classList.toggle('light-mode');
-  localStorage.setItem('bp-theme', isLight ? 'light' : 'dark');
-  updateToggleIcon();
-}
-
-// トグルアイコン更新（全トグルボタンを更新）
-function updateToggleIcon() {
-  const isLight = document.body.classList.contains('light-mode');
-  const icon = isLight
-    ? '<i class="fa-solid fa-moon text-base"></i>'
-    : '<i class="fa-solid fa-sun text-base"></i>';
-  const btn = document.getElementById('theme-toggle');
-  if (btn) btn.innerHTML = icon;
-  document.querySelectorAll('.theme-toggle-icon').forEach(el => {
-    el.innerHTML = icon;
-  });
-}
 
 function getMinimalHeader(isAdmin) {
   return `
@@ -70,9 +35,7 @@ function getMinimalHeader(isAdmin) {
             <span class="text-2xl font-bold text-cream font-heading">WAVE</span>
             ${isAdmin ? '<span class="text-[0.625rem] font-bold text-gold-light ml-2 px-2 py-0.5 bg-gold/10 rounded-md tracking-wider">ADMIN</span>' : ''}
           </a>
-          <div class="flex-1 flex justify-end">
-            ${getThemeToggleBtn()}
-          </div>
+          <div class="flex-1"></div>
         </div>
       </div>
       <div class="header-sparkles"></div>
@@ -98,7 +61,6 @@ function getUserHeader() {
               <i class="fa-solid fa-calendar-week text-lg sm:text-sm"></i><span class="hidden sm:inline">今週の一覧</span>
             </a>
             -->
-            ${getThemeToggleBtn()}
             <a href="login.html" class="text-warm-gray/60 hover:text-status-error transition-all duration-400 flex items-center gap-1.5 text-sm">
               <i class="fa-solid fa-right-from-bracket text-lg sm:text-sm"></i>
             </a>
@@ -128,15 +90,11 @@ function getAdminHeader() {
               <i class="fa-solid fa-user-shield"></i>
               <span class="text-xs">管理者</span>
             </div>
-            ${getThemeToggleBtn()}
             <a href="login.html" class="text-warm-gray/60 hover:text-status-error transition-all duration-400 flex items-center gap-2 text-sm">
               <i class="fa-solid fa-right-from-bracket"></i>ログアウト
             </a>
           </nav>
           <div class="flex items-center gap-2 md:hidden">
-            <button onclick="toggleTheme()" class="theme-toggle-btn theme-toggle-icon" title="テーマ切替">
-              <i class="fa-solid fa-sun text-base"></i>
-            </button>
             <button id="mobile-menu-btn" class="text-warm-text/80 hover:text-cream p-2 transition-all duration-400">
               <i class="fa-solid fa-bars text-xl"></i>
             </button>

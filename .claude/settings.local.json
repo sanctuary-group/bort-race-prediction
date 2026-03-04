@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(xargs grep -l \"slide\\\\|carousel\")"
+      "Bash(xargs grep -l \"slide\\\\|carousel\")",
+      "WebFetch(domain:pin.it)",
+      "WebFetch(domain:api.pinterest.com)",
+      "WebFetch(domain:www.pinterest.com)"
     ]
   }
 }

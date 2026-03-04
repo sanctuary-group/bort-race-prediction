@@ -215,9 +215,9 @@
 
       const betsRows = pred.bets.map(bet => `
           <tr class="transition-all duration-400">
-            <td class="px-4 py-3 text-charcoal font-medium">${bet.type}</td>
-            <td class="px-4 py-3 text-center font-mono text-charcoal">${bet.combination}</td>
-            <td class="px-4 py-3 text-right font-mono font-bold text-gold-warm">${bet.odds.toFixed(1)}</td>
+            <td class="px-4 py-3 text-charcoal font-medium"><i class="fa-solid fa-ticket text-gold/40 mr-1.5 text-xs"></i>${bet.type}</td>
+            <td class="px-4 py-3 text-center font-mono text-charcoal font-semibold">${bet.combination}</td>
+            <td class="px-4 py-3 text-right font-mono font-bold text-gold-warm text-base">${bet.odds.toFixed(1)}<span class="text-xs text-warm-gray/60 ml-0.5">倍</span></td>
           </tr>
         `).join('');
 
@@ -250,27 +250,28 @@
               </div>
 
               <!-- 予測結果 -->
-              <div class="px-5 sm:px-7 py-5">
+              <div class="px-5 sm:px-7 py-5" style="border-top: 1px solid var(--border-gold-accent)">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
                   <h4 class="text-xs font-semibold uppercase tracking-widest text-warm-gray/80">
-                    <i class="fa-solid fa-crosshairs text-gold-shine mr-1"></i>予測結果
+                    <i class="fa-solid fa-crosshairs text-gold-shine mr-1.5"></i>予測結果
                   </h4>
                   <div class="flex items-center gap-2">
-                    <span class="text-xs text-warm-gray">信頼度</span>
-                    <div class="w-28">${getConfidenceBar(pred.confidence)}</div>
+                    <span class="text-xs text-warm-gray"><i class="fa-solid fa-signal text-gold/40 mr-1"></i>信頼度</span>
+                    <div class="w-32">${getConfidenceBar(pred.confidence)}</div>
                   </div>
                 </div>
 
-                <div class="bg-gradient-to-b from-dark-surface/80 to-dark-light/40 rounded-2xl p-5 sm:p-6 mb-5 text-center">
-                  <p class="text-xs font-semibold uppercase tracking-widest text-warm-gray/80 mb-2">予想着順</p>
-                  <div class="flex items-center justify-center gap-2 text-xl">
+                <div class="prediction-order-box mb-5">
+                  <div class="prediction-sparkles"></div>
+                  <p class="text-xs font-semibold uppercase tracking-widest text-warm-gray/80 mb-3" style="position:relative;z-index:1"><i class="fa-solid fa-trophy text-gold-shine mr-1.5"></i>予想着順</p>
+                  <div class="flex items-center justify-center gap-3 text-xl" style="position:relative;z-index:1">
                     ${renderPredictionOrder(pred.top3, 'lg')}
                   </div>
                 </div>
 
                 <div class="mb-4">
                   <h4 class="text-xs font-semibold uppercase tracking-widest text-warm-gray/80 mb-2">
-                    <i class="fa-solid fa-coins mr-1"></i>推奨買い目
+                    <i class="fa-solid fa-coins text-gold-shine mr-1.5"></i>推奨買い目
                   </h4>
                   <div class="rounded-xl overflow-hidden bg-dark-surface/50">
                     <table class="table-premium">
@@ -320,6 +321,7 @@
       dotsEls = dotsContainer.querySelectorAll('button');
 
       updateCarousel();
+      initPredictionSparkles();
     }
 
     function doWrapTransition(newIdx) {

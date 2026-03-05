@@ -29,9 +29,9 @@ function renderPredictionOrder(boats, size = 'md') {
 
   if (size === 'lg') {
     const rankStyles = [
-      { crown: '#d4c28a', label: '1st', filter: 'invert(78%) sepia(30%) saturate(500%) hue-rotate(10deg) brightness(95%)' },
-      { crown: '#b0b0b0', label: '2nd', filter: 'invert(75%) brightness(1.2)' },
-      { crown: '#cd7f32', label: '3rd', filter: 'invert(50%) sepia(60%) saturate(400%) hue-rotate(350deg) brightness(80%)' }
+      { crown: '#d4c28a', label: '1st', filter: 'filter:brightness(0) invert(1) sepia(1) saturate(3) hue-rotate(10deg) brightness(0.85)' },
+      { crown: '#b0b0b0', label: '2nd', filter: 'filter:brightness(0) invert(1) sepia(0) saturate(0) brightness(0.75)' },
+      { crown: '#cd7f32', label: '3rd', filter: 'filter:brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(345deg) brightness(0.6)' }
     ];
 
     return boats.map((n, i) => {

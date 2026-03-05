@@ -29,9 +29,9 @@ function renderPredictionOrder(boats, size = 'md') {
 
   if (size === 'lg') {
     const rankStyles = [
-      { crown: '#d4c28a', label: '1st', filter: 'filter:brightness(0) invert(1) sepia(1) saturate(3) hue-rotate(10deg) brightness(0.85)' },
-      { crown: '#b0b0b0', label: '2nd', filter: 'filter:brightness(0) invert(1) sepia(0) saturate(0) brightness(0.75)' },
-      { crown: '#cd7f32', label: '3rd', filter: 'filter:brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(345deg) brightness(0.6)' }
+      { crown: '#d4c28a', label: '1st', filter: 'filter:brightness(0) invert(1) sepia(1) saturate(3) hue-rotate(10deg) brightness(0.85)', gradient: 'linear-gradient(135deg, #d4c28a, #b09a5c, #d4c28a)', glow: '0 0 12px rgba(176,154,92,0.4), 0 0 24px rgba(212,194,138,0.15)' },
+      { crown: '#b0b0b0', label: '2nd', filter: 'filter:brightness(0) invert(1) sepia(0) saturate(0) brightness(0.75)', gradient: 'linear-gradient(135deg, #c0c0c0, #8a8a8a, #c0c0c0)', glow: '0 0 8px rgba(160,160,160,0.3)' },
+      { crown: '#cd7f32', label: '3rd', filter: 'filter:brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(345deg) brightness(0.6)', gradient: 'linear-gradient(135deg, #cd7f32, #a0622d, #cd7f32)', glow: '0 0 8px rgba(141,125,63,0.3)' }
     ];
 
     return boats.map((n, i) => {
@@ -41,7 +41,7 @@ function renderPredictionOrder(boats, size = 'md') {
           `<i class="fa-solid fa-crown" style="color:${s.crown};font-size:0.85rem;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.4))"></i>` +
           `<div style="position:relative;width:60px;height:60px">` +
             `<img src="../shared/assets/wreath.png" style="width:100%;height:100%;${s.filter}" alt="">` +
-            `<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2">${getBoatBadge(n, size)}</div>` +
+            `<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2"><div style="border-radius:50%;padding:3px;background:${s.gradient};box-shadow:${s.glow}">${getBoatBadge(n, size)}</div></div>` +
           `</div>` +
           `<span style="font-size:0.55rem;font-weight:700;color:${s.crown};letter-spacing:0.05em">${s.label}</span>` +
         `</div>`;

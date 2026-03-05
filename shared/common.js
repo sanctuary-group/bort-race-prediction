@@ -22,47 +22,29 @@ function getBoatBadge(number, size = 'md') {
   return `<span class="inline-flex items-center justify-center ${sizeClass} rounded-full ${color.bg} ${color.text} ${color.border} font-bold ${shadowClass}"${glowStyle}>${number}</span>`;
 }
 
-// メダルフレームSVG生成（rank: 1=金, 2=銀, 3=銅）
-function getMedalFrameSvg(rank) {
-  const colors = {
-    1: { fill: '#d4c28a', stroke: '#b09a5c', darker: '#8d7d3f' },
-    2: { fill: '#c0c0c0', stroke: '#8a8a8a', darker: '#6a6a6a' },
-    3: { fill: '#cd7f32', stroke: '#a0622d', darker: '#7a4a1a' }
-  };
-  const c = colors[rank] || colors[1];
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 85" width="72" height="85" style="position:absolute;top:0;left:0">
-    <!-- Left laurel stem -->
-    <path d="M16,62 Q8,48 14,28" fill="none" stroke="${c.darker}" stroke-width="1"/>
-    <!-- Left leaves -->
-    <ellipse cx="12" cy="52" rx="4" ry="8" transform="rotate(30,12,52)" fill="${c.fill}" stroke="${c.darker}" stroke-width="0.5"/>
-    <ellipse cx="10" cy="42" rx="4" ry="8" transform="rotate(15,10,42)" fill="${c.fill}" stroke="${c.darker}" stroke-width="0.5"/>
-    <ellipse cx="12" cy="32" rx="4" ry="8" transform="rotate(-5,12,32)" fill="${c.fill}" stroke="${c.darker}" stroke-width="0.5"/>
-    <!-- Right laurel stem -->
-    <path d="M56,62 Q64,48 58,28" fill="none" stroke="${c.darker}" stroke-width="1"/>
-    <!-- Right leaves -->
-    <ellipse cx="60" cy="52" rx="4" ry="8" transform="rotate(-30,60,52)" fill="${c.fill}" stroke="${c.darker}" stroke-width="0.5"/>
-    <ellipse cx="62" cy="42" rx="4" ry="8" transform="rotate(-15,62,42)" fill="${c.fill}" stroke="${c.darker}" stroke-width="0.5"/>
-    <ellipse cx="60" cy="32" rx="4" ry="8" transform="rotate(5,60,32)" fill="${c.fill}" stroke="${c.darker}" stroke-width="0.5"/>
-    <!-- Center circle outline -->
-    <circle cx="36" cy="38" r="22" fill="none" stroke="${c.stroke}" stroke-width="2"/>
-    <!-- Crown -->
-    <path d="M26,16 L29,8 L33,13 L36,6 L39,13 L43,8 L46,16 Z" fill="${c.fill}" stroke="${c.darker}" stroke-width="0.5"/>
-    <!-- Ribbon -->
-    <path d="M28,62 L24,80 L30,75 L36,80 L42,75 L48,80 L44,62" fill="${c.fill}" stroke="${c.darker}" stroke-width="0.5"/>
-  </svg>`;
-}
-
 // 予想着順を矢印付きで表示
 function renderPredictionOrder(boats, size = 'md') {
   const arrowClass = size === 'lg' ? 'mx-2 text-gold/60 text-sm' : 'mx-1.5 text-warm-gray/50 text-xs';
   const separator = `<span class="${arrowClass}"><i class="fa-solid fa-chevron-right"></i></span>`;
 
   if (size === 'lg') {
+    const rankStyles = [
+      { crown: '#d4c28a', label: '1st', filter: 'invert(78%) sepia(30%) saturate(500%) hue-rotate(10deg) brightness(95%)' },
+      { crown: '#b0b0b0', label: '2nd', filter: 'invert(75%) brightness(1.2)' },
+      { crown: '#cd7f32', label: '3rd', filter: 'invert(50%) sepia(60%) saturate(400%) hue-rotate(350deg) brightness(80%)' }
+    ];
+
     return boats.map((n, i) => {
-      const rank = i + 1;
-      if (rank <= 3) {
-        return `<div class="flex flex-col items-center"><div style="position:relative;width:72px;height:85px">${getMedalFrameSvg(rank)}<div style="position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:2">${getBoatBadge(n, size)}</div></div></div>`;
+      if (i < 3) {
+        const s = rankStyles[i];
+        return `<div class="flex flex-col items-center" style="gap:2px">` +
+          `<i class="fa-solid fa-crown" style="color:${s.crown};font-size:0.85rem;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.4))"></i>` +
+          `<div style="position:relative;width:60px;height:60px">` +
+            `<img src="../shared/assets/wreath.png" style="width:100%;height:100%;${s.filter}" alt="">` +
+            `<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2">${getBoatBadge(n, size)}</div>` +
+          `</div>` +
+          `<span style="font-size:0.55rem;font-weight:700;color:${s.crown};letter-spacing:0.05em">${s.label}</span>` +
+        `</div>`;
       }
       return `<div class="flex flex-col items-center">${getBoatBadge(n, size)}</div>`;
     }).join(separator);

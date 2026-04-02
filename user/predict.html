@@ -23,25 +23,16 @@
       <h2 class="text-xs font-semibold uppercase tracking-widest text-warm-gray/80 mb-3">
         <i class="fa-solid fa-sliders mr-1"></i>レース選択
       </h2>
-      <div class="flex flex-wrap items-center gap-x-6 gap-y-1 mb-3">
-        <div class="flex items-center gap-1.5">
-          <span class="text-xs text-warm-gray">推奨度：</span>
-          <span id="recommendation-stars" class="text-gold text-sm tracking-wider"></span>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <span class="text-xs text-warm-gray">推奨レース：</span>
-          <span class="text-sm font-semibold text-cream" id="recommended-race"></span>
-        </div>
-      </div>
-      <div class="flex items-start gap-2 mb-4 px-3 py-2.5 rounded-lg bg-dark-surface/50">
-        <i class="fa-solid fa-robot text-gold-shine text-sm mt-0.5"></i>
-        <p class="text-sm text-cream" id="ai-comment-text"></p>
+      <div class="flex items-center gap-2 mb-4 px-3 py-2.5 rounded-lg bg-dark-surface/50">
+        <i class="fa-solid fa-robot text-gold/40 text-sm"></i>
+        <span class="text-sm text-warm-gray/60">AIコメント・推奨レース機能は準備中です</span>
+        <span class="px-2 py-0.5 rounded text-xs font-medium bg-status-purple-bg text-status-purple ml-auto">準備中</span>
       </div>
       <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-3 items-end">
         <!-- 日付 -->
         <div>
           <label class="block text-xs text-warm-gray mb-1">日付</label>
-          <input type="date" id="race-date" value="2026-02-23"
+          <input type="date" id="race-date"
             class="input-premium text-sm w-full">
         </div>
         <!-- レース場 -->
@@ -99,38 +90,27 @@
 
     <!-- 出走表 -->
     <section class="card-gold-accent mb-8 overflow-hidden">
-      <div class="px-5 sm:px-7 py-5 flex flex-wrap items-center justify-between gap-2" style="border-bottom: 1px solid var(--border-gold-accent)">
-        <div>
-          <h2 class="text-xl font-heading font-semibold tracking-tight text-charcoal" id="race-title">1R 江戸川グランプリ</h2>
-          <p class="text-sm text-warm-gray" id="race-subtitle">予選 | 1800m</p>
+      <div class="px-5 sm:px-7 py-5 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-3">
+          <h2 class="text-xl font-heading font-semibold tracking-tight text-charcoal">
+            <i class="fa-solid fa-table-list mr-2 text-gold/40"></i>出走表
+          </h2>
+          <span class="px-2 py-0.5 rounded text-xs font-medium bg-status-purple-bg text-status-purple">準備中</span>
         </div>
-        <span class="badge-premium bg-status-warning-bg text-gold">
-          <i class="fa-solid fa-table-list mr-1"></i>出走表
-        </span>
       </div>
-      <div class="overflow-x-auto">
-        <table class="table-premium min-w-[640px]">
-          <thead>
-            <tr>
-              <th class="text-left">艇</th>
-              <th class="text-left">選手名</th>
-              <th class="text-center">級別</th>
-              <th class="text-center">勝率</th>
-              <th class="text-center">2連率</th>
-              <th class="text-center">ST</th>
-              <th class="text-center">モーター</th>
-              <th class="text-center">ボート</th>
-            </tr>
-          </thead>
-          <tbody id="race-table-body">
-          </tbody>
-        </table>
+      <div class="px-5 sm:px-7 py-12 flex flex-col items-center justify-center text-center">
+        <div class="w-16 h-16 rounded-full bg-dark-surface/80 flex items-center justify-center mb-4">
+          <i class="fa-solid fa-users text-gold/40 text-2xl"></i>
+        </div>
+        <h4 class="text-base font-semibold text-charcoal mb-2">出走表は準備中です</h4>
+        <p class="text-sm text-warm-gray max-w-xs">選手情報・モーター成績等の表示は今後のアップデートで対応予定です。</p>
       </div>
     </section>
 
   </main>
 
   <script src="../shared/dummy-data.js"></script>
+  <script src="../shared/api.js"></script>
   <script src="../shared/common.js"></script>
   <script src="../shared/header.js"></script>
   <script>
@@ -138,123 +118,174 @@
     let currentSlide = 0;
     let virtualIndex = 1;
     let trackEl, dotsEls;
+    let currentEstimate = null; // APIから取得したestimateデータ
+    let dailyEstimates = []; // 当日の全estimateデータ
 
-    // AIコメント描画
-    function renderAIComment() {
-      const data = DUMMY_AI_COMMENT;
-      document.getElementById('ai-comment-text').textContent = data.comment;
-      const filled = '★'.repeat(data.recommendation);
-      const empty = '☆'.repeat(5 - data.recommendation);
-      document.getElementById('recommendation-stars').textContent = filled + empty;
-      const stadiumName = STADIUMS[data.recommended_stadium] || '';
-      document.getElementById('recommended-race').textContent = `${stadiumName} ${data.recommended_race}R`;
+
+    // 当日の全estimatesを取得し、会場・レースタブを再構築
+    async function loadDailyEstimates() {
+      const date = document.getElementById('race-date').value;
+      try {
+        const res = await fetchEstimatesByDate(date);
+        dailyEstimates = res.data || [];
+        console.log('[API] daily estimates loaded:', date, dailyEstimates.length, '件');
+      } catch (e) {
+        dailyEstimates = [];
+        console.warn('[API] daily estimates取得失敗:', e.message);
+      }
+      rebuildStadiumSelect();
+      rebuildRaceTabs();
+      selectCurrentEstimate();
+    }
+
+    // 現在の会場・レース番号からestimateを個別取得して描画
+    async function selectCurrentEstimate() {
+      const date = document.getElementById('race-date').value;
+      const stadium = document.getElementById('race-stadium').value;
+      const raceCode = buildRaceCode(date, stadium, selectedRace);
+      try {
+        currentEstimate = await fetchEstimate(raceCode);
+        console.log('[API] estimate loaded:', raceCode, currentEstimate);
+      } catch (e) {
+        currentEstimate = null;
+        console.warn('[API] estimate取得失敗:', e.message);
+      }
+      initCarousel();
+    }
+
+
+    // レース場セレクト再構築（APIデータの会場のみ）
+    function rebuildStadiumSelect() {
+      const select = document.getElementById('race-stadium');
+      const prevValue = select.value;
+      select.innerHTML = '';
+
+      const venues = [...new Set(dailyEstimates.map(e => e.venueCode))].sort();
+
+      if (venues.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '-- データなし --';
+        select.appendChild(opt);
+        return;
+      }
+
+      venues.forEach((code, i) => {
+        const num = parseInt(code, 10);
+        const opt = document.createElement('option');
+        opt.value = num;
+        opt.textContent = STADIUMS[num] || code;
+        if (String(num) === prevValue) opt.selected = true;
+        select.appendChild(opt);
+      });
+
+      // 前の選択が残っていなければ先頭を選択
+      if (!venues.includes(String(parseInt(prevValue, 10)).padStart(2, '0'))) {
+        select.selectedIndex = 0;
+      }
+    }
+
+    // レース番号タブ再構築（選択中の会場で存在するレースのみ）
+    function rebuildRaceTabs() {
+      const container = document.getElementById('race-tabs');
+      container.innerHTML = '';
+      const stadium = document.getElementById('race-stadium').value;
+      const venueCode = String(stadium).padStart(2, '0');
+
+      const races = dailyEstimates
+        .filter(e => e.venueCode === venueCode)
+        .map(e => e.raceNumber)
+        .sort((a, b) => a - b);
+
+      if (races.length === 0) return;
+
+      // 選択中のレースがなければ先頭に合わせる
+      if (!races.includes(selectedRace)) {
+        selectedRace = races[0];
+      }
+
+      races.forEach(r => {
+        const btn = document.createElement('button');
+        btn.textContent = r + 'R';
+        btn.className = r === selectedRace
+          ? 'px-3 py-2.5 rounded-lg text-xs font-semibold bg-gold text-charcoal shadow-elevation-1 transition-all duration-600 ease-premium flex-shrink-0'
+          : 'px-3 py-2.5 rounded-lg text-xs font-medium text-warm-gray hover:bg-dark-surface hover:text-charcoal transition-all duration-400 flex-shrink-0';
+        btn.addEventListener('click', () => {
+          selectedRace = r;
+          container.querySelectorAll('button').forEach(b => {
+            b.className = 'px-3 py-2.5 rounded-lg text-xs font-medium text-warm-gray hover:bg-dark-surface hover:text-charcoal transition-all duration-400 flex-shrink-0';
+          });
+          btn.className = 'px-3 py-2.5 rounded-lg text-xs font-semibold bg-gold text-charcoal shadow-elevation-1 transition-all duration-600 ease-premium flex-shrink-0';
+          selectCurrentEstimate();
+        });
+        container.appendChild(btn);
+      });
     }
 
     // 初期化
     document.addEventListener('DOMContentLoaded', function () {
-      renderAIComment();
-      initStadiumSelect();
-      initRaceTabs();
-      renderRaceTable();
-      initCarousel();
+      document.getElementById('race-date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('race-stadium').addEventListener('change', () => {
+        rebuildRaceTabs();
+        selectCurrentEstimate();
+      });
+      loadDailyEstimates();
       initSwipe();
       initSwipeHint();
     });
 
-    // レース場セレクト初期化
-    function initStadiumSelect() {
-      const select = document.getElementById('race-stadium');
-      Object.entries(STADIUMS).forEach(([num, name]) => {
-        const opt = document.createElement('option');
-        opt.value = num;
-        opt.textContent = name;
-        if (num === '3') opt.selected = true;
-        select.appendChild(opt);
-      });
-      select.addEventListener('change', () => { renderRaceTable(); initCarousel(); });
-    }
-
-    // レース番号タブ初期化
-    function initRaceTabs() {
-      const container = document.getElementById('race-tabs');
-      for (let i = 1; i <= 12; i++) {
-        const btn = document.createElement('button');
-        btn.textContent = i + 'R';
-        btn.className = i === 1
-          ? 'px-3 py-2.5 rounded-lg text-xs font-semibold bg-gold text-charcoal shadow-elevation-1 transition-all duration-600 ease-premium flex-shrink-0'
-          : 'px-3 py-2.5 rounded-lg text-xs font-medium text-warm-gray hover:bg-dark-surface hover:text-charcoal transition-all duration-400 flex-shrink-0';
-        btn.addEventListener('click', () => {
-          selectedRace = i;
-          document.querySelectorAll('#race-tabs button').forEach(b => {
-            b.className = 'px-3 py-2.5 rounded-lg text-xs font-medium text-warm-gray hover:bg-dark-surface hover:text-charcoal transition-all duration-400 flex-shrink-0';
-          });
-          btn.className = 'px-3 py-2.5 rounded-lg text-xs font-semibold bg-gold text-charcoal shadow-elevation-1 transition-all duration-600 ease-premium flex-shrink-0';
-          renderRaceTable();
-          initCarousel();
-        });
-        container.appendChild(btn);
-      }
-    }
-
-    // 出走表描画
-    function renderRaceTable() {
-      const program = DUMMY_PROGRAMS.find(p => p.race_number === selectedRace) || DUMMY_PROGRAMS[0];
-      const stadiumName = STADIUMS[program.race_stadium_number] || '江戸川';
-
-      document.getElementById('race-title').textContent = `${selectedRace}R ${stadiumName} ${program.race_title}`;
-      document.getElementById('race-subtitle').textContent = `${program.race_subtitle} | ${program.race_distance}m`;
-
-      const tbody = document.getElementById('race-table-body');
-      tbody.innerHTML = program.boats.map(boat => `
-        <tr class="transition-all duration-400">
-          <td class="px-4 py-3">${getBoatBadge(boat.racer_boat_number)}</td>
-          <td class="px-4 py-3">
-            <div>
-              <p class="text-charcoal font-medium">${boat.racer_name}</p>
-              <p class="text-xs text-warm-gray">${boat.racer_number} / ${boat.racer_age}歳 / ${boat.racer_weight}kg</p>
-            </div>
-          </td>
-          <td class="px-4 py-3 text-center">
-            <span class="${getClassStyle(boat.racer_class_number)}">${RACER_CLASSES[boat.racer_class_number]}</span>
-          </td>
-          <td class="px-4 py-3 text-center font-mono ${boat.racer_national_top_1_percent >= 6.0 ? 'text-gold-warm font-bold' : 'text-charcoal'}">${boat.racer_national_top_1_percent.toFixed(2)}</td>
-          <td class="px-4 py-3 text-center font-mono text-charcoal">${boat.racer_national_top_2_percent.toFixed(1)}%</td>
-          <td class="px-4 py-3 text-center font-mono ${boat.racer_average_start_timing <= 0.15 ? 'text-status-success font-bold' : 'text-charcoal'}">${boat.racer_average_start_timing.toFixed(2)}</td>
-          <td class="px-4 py-3 text-center">
-            <span class="font-mono text-charcoal">${boat.racer_assigned_motor_number}</span>
-            <span class="text-xs ${boat.racer_assigned_motor_top_2_percent >= 45 ? 'text-gold-warm' : 'text-warm-gray'} ml-1">${boat.racer_assigned_motor_top_2_percent.toFixed(1)}%</span>
-          </td>
-          <td class="px-4 py-3 text-center">
-            <span class="font-mono text-charcoal">${boat.racer_assigned_boat_number}</span>
-            <span class="text-xs text-warm-gray ml-1">${boat.racer_assigned_boat_top_2_percent.toFixed(1)}%</span>
-          </td>
-        </tr>
-      `).join('');
-    }
+    // 日付変更時
+    document.getElementById('race-date').addEventListener('change', () => loadDailyEstimates());
 
     // カルーセル初期化
     function buildSlideHTML(logic, i, isClone) {
-      const pred = DUMMY_PREDICTIONS[logic.id];
-      const statusClass = logic.status === '有効'
-        ? 'bg-status-success-bg text-status-success'
-        : 'bg-status-purple-bg text-status-purple';
+      // ロジックB, C は「準備中」カードを表示
+      if (logic.id !== 'A') {
+        return `
+          <div class="w-full flex-shrink-0">
+            <div class="card-gold-accent overflow-hidden">
+              <div class="px-5 sm:px-7 py-5" style="border-bottom: 1px solid var(--border-gold-accent)">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-lg font-bold text-charcoal">${logic.name}<span class="text-sm font-normal text-warm-gray ml-2">${DUMMY_PREDICTIONS[logic.id].logic_subtitle}</span></h3>
+                  <span class="px-2 py-0.5 rounded text-xs font-medium bg-status-purple-bg text-status-purple">準備中</span>
+                </div>
+                <p class="text-sm text-warm-gray">${logic.description}</p>
+              </div>
+              <div class="px-5 sm:px-7 py-16 flex flex-col items-center justify-center text-center">
+                <div class="w-20 h-20 rounded-full bg-dark-surface/80 flex items-center justify-center mb-5">
+                  <i class="fa-solid fa-flask text-gold/40 text-3xl"></i>
+                </div>
+                <h4 class="text-lg font-semibold text-charcoal mb-2">Coming Soon</h4>
+                <p class="text-sm text-warm-gray max-w-xs">独自予測モデルを構築中です。次期アップデートで提供予定です。</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }
 
-      const betsRows = pred.bets.map(bet => `
-          <tr class="transition-all duration-400">
-            <td class="text-charcoal font-medium"><i class="fa-solid fa-ticket text-gold/40 mr-1.5 text-xs"></i>${bet.type}</td>
-            <td class="text-center font-mono text-charcoal font-semibold">${bet.combination}</td>
-            <td class="text-right font-mono font-bold text-gold-warm text-base">${bet.odds.toFixed(1)}<span class="text-xs text-warm-gray/60 ml-0.5">倍</span></td>
-          </tr>
-        `).join('');
-
-      const detailId = isClone ? `analysis-detail-clone-${i}` : `analysis-detail-${i}`;
-      const toggleBtn = isClone
-        ? `<span class="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-warm-gray/70 mb-3">
-                    <i class="fa-solid fa-chevron-down text-xs"></i>分析詳細
-                  </span>`
-        : `<button onclick="toggleAnalysis(${i})" class="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-warm-gray/70 hover:text-charcoal transition-all duration-400 mb-3">
-                    <i class="fa-solid fa-chevron-down text-xs" id="analysis-icon-${i}"></i>分析詳細
-                  </button>`;
+      // ロジックA: APIデータがなければ準備中
+      if (!currentEstimate) {
+        return `
+          <div class="w-full flex-shrink-0">
+            <div class="card-gold-accent overflow-hidden">
+              <div class="px-5 sm:px-7 py-5" style="border-bottom: 1px solid var(--border-gold-accent)">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-lg font-bold text-charcoal">${logic.name}<span class="text-sm font-normal text-warm-gray ml-2">${DUMMY_PREDICTIONS[logic.id].logic_subtitle}</span></h3>
+                  <span class="px-2 py-0.5 rounded text-xs font-medium bg-status-warning-bg text-gold">データなし</span>
+                </div>
+                <p class="text-sm text-warm-gray">${logic.description}</p>
+              </div>
+              <div class="px-5 sm:px-7 py-16 flex flex-col items-center justify-center text-center">
+                <div class="w-20 h-20 rounded-full bg-dark-surface/80 flex items-center justify-center mb-5">
+                  <i class="fa-solid fa-calendar-xmark text-gold/40 text-3xl"></i>
+                </div>
+                <h4 class="text-lg font-semibold text-charcoal mb-2">予測データなし</h4>
+                <p class="text-sm text-warm-gray max-w-xs">この日付・レース場の予測データがありません。開催日・会場を変更してください。</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }
 
       return `
           <div class="w-full flex-shrink-0">
@@ -262,62 +293,21 @@
               <!-- ロジック概要 -->
               <div class="px-5 sm:px-7 py-5" style="border-bottom: 1px solid var(--border-gold-accent)">
                 <div class="flex items-center justify-between mb-2">
-                  <h3 class="text-lg font-bold text-charcoal">${logic.name}<span class="text-sm font-normal text-warm-gray ml-2">${pred.logic_subtitle}</span></h3>
-                  <span class="px-2 py-0.5 rounded text-xs font-medium ${statusClass}">${logic.status}</span>
+                  <h3 class="text-lg font-bold text-charcoal">${logic.name}<span class="text-sm font-normal text-warm-gray ml-2">${DUMMY_PREDICTIONS[logic.id].logic_subtitle}</span></h3>
+                  <span class="px-2 py-0.5 rounded text-xs font-medium bg-status-success-bg text-status-success">有効</span>
                 </div>
                 <p class="text-sm text-warm-gray mb-3">${logic.description}</p>
-                <div class="flex items-center gap-3">
-                  <span class="text-xs text-warm-gray">的中率</span>
-                  <div class="flex-1 bg-dark-surface rounded-full h-1.5">
-                    <div class="bg-gold h-1.5 rounded-full" style="width: ${logic.accuracy}%"></div>
-                  </div>
-                  <span class="text-sm font-mono font-bold text-gold-warm">${logic.accuracy}%</span>
-                </div>
               </div>
 
               <!-- 予測結果 -->
               <div class="px-5 sm:px-7 py-5" style="border-top: 1px solid var(--border-gold-accent)">
-                <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
-                  <h4 class="text-xs font-semibold uppercase tracking-widest text-warm-gray/80">
-                    <i class="fa-solid fa-crosshairs text-gold-shine mr-1.5"></i>予測結果
-                  </h4>
-                  <div class="flex items-center gap-2">
-                    <span class="text-xs text-warm-gray"><i class="fa-solid fa-signal text-gold/40 mr-1"></i>信頼度</span>
-                    <div class="w-32">${getConfidenceBar(pred.confidence)}</div>
-                  </div>
-                </div>
-
                 <div class="prediction-order-box mb-5">
                   <div class="prediction-sparkles"></div>
                   <p class="text-xs font-semibold uppercase tracking-widest text-warm-gray/80 mb-3" style="position:relative;z-index:1"><i class="fa-solid fa-trophy text-gold-shine mr-1.5"></i>予想着順</p>
                   <div class="flex items-center justify-center gap-3 text-xl" style="position:relative;z-index:1">
-                    ${renderPredictionOrder(pred.top3, 'lg')}
+                    ${renderPredictionOrder(currentEstimate.predictedRanks, 'lg')}
                   </div>
-                </div>
-
-                <div class="mb-4">
-                  <h4 class="text-xs font-semibold uppercase tracking-widest text-warm-gray/80 mb-2">
-                    <i class="fa-solid fa-coins text-gold-shine mr-1.5"></i>推奨買い目
-                  </h4>
-                  <div class="rounded-xl overflow-hidden bg-dark-surface/50">
-                    <table class="table-premium">
-                      <thead>
-                        <tr>
-                          <th class="text-left">券種</th>
-                          <th class="text-center">組合せ</th>
-                          <th class="text-right">オッズ</th>
-                        </tr>
-                      </thead>
-                      <tbody>${betsRows}</tbody>
-                    </table>
-                  </div>
-                </div>
-
-                <div>
-                  ${toggleBtn}
-                  <div id="${detailId}" class="hidden bg-dark-surface/50 rounded-xl p-5">
-                    <p class="text-sm text-warm-text leading-relaxed">${pred.analysis}</p>
-                  </div>
+                  <p class="text-center text-sm text-gold-warm mt-3" style="position:relative;z-index:1"><i class="fa-solid fa-bolt mr-1"></i>決まり手: ${currentEstimate.predictedTechnique}</p>
                 </div>
               </div>
             </div>

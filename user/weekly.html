@@ -36,27 +36,27 @@
       <div class="flex gap-2" id="stadium-filter"></div>
     </div>
 
-    <!-- 集計サマリー -->
+    <!-- 集計サマリー（準備中） -->
     <div class="grid grid-cols-2 gap-4 mb-6">
-      <div class="card-premium p-5">
+      <div class="card-premium p-5 opacity-60">
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 rounded-xl bg-gradient-to-b from-gold/12 to-gold/4 flex items-center justify-center">
-            <i class="fa-solid fa-bullseye text-gold-shine text-xl"></i>
+            <i class="fa-solid fa-bullseye text-gold/40 text-xl"></i>
           </div>
           <div>
             <p class="text-xs text-warm-gray/80">本日の的中</p>
-            <p class="text-xl font-bold text-charcoal" id="today-stats">-</p>
+            <p class="text-sm text-warm-gray">準備中</p>
           </div>
         </div>
       </div>
-      <div class="card-premium p-5">
+      <div class="card-premium p-5 opacity-60">
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 rounded-xl bg-gradient-to-b from-gold/12 to-gold/4 flex items-center justify-center">
-            <i class="fa-solid fa-chart-pie text-gold-shine text-xl"></i>
+            <i class="fa-solid fa-chart-pie text-gold/40 text-xl"></i>
           </div>
           <div>
             <p class="text-xs text-warm-gray/80">今週の的中</p>
-            <p class="text-xl font-bold text-charcoal" id="week-stats">-</p>
+            <p class="text-sm text-warm-gray">準備中</p>
           </div>
         </div>
       </div>
@@ -75,19 +75,36 @@
   </main>
 
   <script src="../shared/dummy-data.js"></script>
+  <script src="../shared/api.js"></script>
   <script src="../shared/common.js"></script>
   <script src="../shared/header.js"></script>
   <script>
     let selectedDate = '2026-02-23';
     let selectedStadium = 'all';
+    let apiEstimates = []; // APIから取得したestimates
 
     document.addEventListener('DOMContentLoaded', function () {
       initWeekRange();
       initDateTabs();
       initStadiumFilter();
-      renderCards();
-      updateStats();
+      loadEstimatesForDate();
     });
+
+    // APIからestimates取得
+    async function loadEstimatesForDate() {
+      try {
+        const res = await fetchEstimatesByDate(selectedDate);
+        apiEstimates = res.data || [];
+        console.log('[API] estimates loaded:', selectedDate, apiEstimates.length, '件');
+      } catch (e) {
+        apiEstimates = [];
+        console.warn('[API] estimates取得失敗（ダミーデータで表示）:', e.message);
+      }
+      selectedStadium = 'all';
+      rebuildStadiumFilter();
+      renderCards();
+    }
+
 
     function initWeekRange() {
       const dates = getWeekDates();
@@ -111,30 +128,39 @@
             b.className = 'px-4 py-2 rounded-lg text-sm font-medium text-warm-gray hover:bg-dark-surface whitespace-nowrap transition-all duration-400';
           });
           btn.className = 'px-4 py-2 rounded-lg text-sm font-semibold bg-gold text-charcoal shadow-elevation-1 whitespace-nowrap transition-all duration-600';
-          renderCards();
-          updateStats();
+          loadEstimatesForDate();
         });
         container.appendChild(btn);
       });
     }
 
     function initStadiumFilter() {
+      rebuildStadiumFilter();
+    }
+
+    function rebuildStadiumFilter() {
       const container = document.getElementById('stadium-filter');
+      container.innerHTML = '';
+
       // 全場ボタン
       const allBtn = document.createElement('button');
       allBtn.textContent = '全場';
       allBtn.dataset.stadium = 'all';
-      allBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-gold text-charcoal shadow-elevation-1 whitespace-nowrap transition-all duration-600';
+      allBtn.className = selectedStadium === 'all'
+        ? 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-gold text-charcoal shadow-elevation-1 whitespace-nowrap transition-all duration-600'
+        : 'px-3 py-1.5 rounded-lg text-xs font-medium text-warm-gray hover:bg-dark-surface whitespace-nowrap transition-all duration-400';
       allBtn.addEventListener('click', () => selectStadiumFilter('all'));
       container.appendChild(allBtn);
 
-      // ダミーデータに含まれるレース場のみ
-      const stadiums = [...new Set(DUMMY_WEEKLY.map(w => w.stadium))];
+      const stadiums = [...new Set(apiEstimates.map(e => parseInt(e.venueCode, 10)))].sort((a, b) => a - b);
+
       stadiums.forEach(num => {
         const btn = document.createElement('button');
         btn.textContent = STADIUMS[num];
         btn.dataset.stadium = num;
-        btn.className = 'px-3 py-1.5 rounded-lg text-xs font-medium text-warm-gray hover:bg-dark-surface whitespace-nowrap transition-all duration-400';
+        btn.className = String(selectedStadium) === String(num)
+          ? 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-gold text-charcoal shadow-elevation-1 whitespace-nowrap transition-all duration-600'
+          : 'px-3 py-1.5 rounded-lg text-xs font-medium text-warm-gray hover:bg-dark-surface whitespace-nowrap transition-all duration-400';
         btn.addEventListener('click', () => selectStadiumFilter(num));
         container.appendChild(btn);
       });
@@ -142,61 +168,34 @@
 
     function selectStadiumFilter(stadium) {
       selectedStadium = stadium;
-      document.querySelectorAll('#stadium-filter button').forEach(b => {
-        b.className = String(b.dataset.stadium) === String(stadium)
-          ? 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-gold text-charcoal shadow-elevation-1 whitespace-nowrap transition-all duration-600'
-          : 'px-3 py-1.5 rounded-lg text-xs font-medium text-warm-gray hover:bg-dark-surface whitespace-nowrap transition-all duration-400';
-      });
+      rebuildStadiumFilter();
       renderCards();
     }
 
     function renderCards() {
-      let filtered = DUMMY_WEEKLY.filter(w => w.date === selectedDate);
+      let items = apiEstimates.map(est => ({
+        stadium: parseInt(est.venueCode, 10),
+        race: est.raceNumber,
+        prediction: est.predictedRanks,
+        technique: est.predictedTechnique,
+      }));
+
       if (selectedStadium !== 'all') {
-        filtered = filtered.filter(w => w.stadium === selectedStadium);
+        items = items.filter(w => w.stadium === Number(selectedStadium));
       }
 
       const container = document.getElementById('prediction-cards');
       const empty = document.getElementById('empty-state');
 
-      if (filtered.length === 0) {
+      if (items.length === 0) {
         container.innerHTML = '';
         empty.classList.remove('hidden');
         return;
       }
       empty.classList.add('hidden');
 
-      container.innerHTML = filtered.map(item => {
+      container.innerHTML = items.map(item => {
         const stadiumName = STADIUMS[item.stadium];
-        const logic = DUMMY_LOGICS.find(l => l.id === item.logic);
-        let resultHtml = '';
-        if (item.result) {
-          if (item.hit) {
-            resultHtml = `
-              <div class="flex items-center gap-2 mt-3">
-                <span class="text-xs text-warm-gray">結果:</span>
-                ${renderPredictionOrder(item.result, 'sm')}
-                <span class="badge-premium bg-status-success-bg text-status-success ml-auto">
-                  <i class="fa-solid fa-circle-check mr-1"></i>的中
-                </span>
-              </div>`;
-          } else {
-            resultHtml = `
-              <div class="flex items-center gap-2 mt-3">
-                <span class="text-xs text-warm-gray">結果:</span>
-                ${renderPredictionOrder(item.result, 'sm')}
-                <span class="badge-premium bg-status-error-bg text-status-error ml-auto">
-                  <i class="fa-solid fa-circle-xmark mr-1"></i>不的中
-                </span>
-              </div>`;
-          }
-        } else {
-          resultHtml = `
-            <div class="flex items-center gap-2 mt-3">
-              <span class="text-xs text-warm-gray">結果:</span>
-              <span class="text-warm-gray text-sm">-- 未確定 --</span>
-            </div>`;
-        }
 
         return `
           <div class="card-premium p-6">
@@ -205,40 +204,23 @@
                 <span class="text-charcoal font-bold">${stadiumName}</span>
                 <span class="text-gold font-mono text-sm">${item.race}R</span>
               </div>
-              <span class="px-2 py-0.5 rounded text-xs font-medium bg-status-warning-bg text-gold">${logic ? logic.name : ''}</span>
-            </div>
-            <div class="flex items-center gap-3 mb-2">
-              <span class="text-xs text-warm-gray">信頼度</span>
-              <div class="flex-1">${getConfidenceBar(item.confidence)}</div>
             </div>
             <div class="flex items-center gap-2">
               <span class="text-xs text-warm-gray">予想:</span>
               ${renderPredictionOrder(item.prediction, 'sm')}
             </div>
-            ${resultHtml}
+            <div class="flex items-center gap-2 mt-3">
+              <span class="text-xs text-warm-gray">決まり手:</span>
+              <span class="text-sm font-medium text-gold-warm"><i class="fa-solid fa-bolt mr-1"></i>${item.technique}</span>
+            </div>
+            <div class="flex items-center gap-2 mt-3">
+              <span class="text-xs text-warm-gray">結果:</span>
+              <span class="text-warm-gray/60 text-sm">準備中</span>
+            </div>
           </div>`;
       }).join('');
     }
 
-    function updateStats() {
-      // 本日
-      const todayItems = DUMMY_WEEKLY.filter(w => w.date === selectedDate && w.result !== null);
-      const todayHits = todayItems.filter(w => w.hit).length;
-      const todayTotal = todayItems.length;
-      const todayPercent = todayTotal > 0 ? (todayHits / todayTotal * 100).toFixed(1) : '-';
-      document.getElementById('today-stats').innerHTML = todayTotal > 0
-        ? `${todayHits}/${todayTotal} <span class="text-sm text-gold-warm">(${todayPercent}%)</span>`
-        : '<span class="text-warm-gray">データなし</span>';
-
-      // 今週
-      const weekItems = DUMMY_WEEKLY.filter(w => w.result !== null);
-      const weekHits = weekItems.filter(w => w.hit).length;
-      const weekTotal = weekItems.length;
-      const weekPercent = weekTotal > 0 ? (weekHits / weekTotal * 100).toFixed(1) : '-';
-      document.getElementById('week-stats').innerHTML = weekTotal > 0
-        ? `${weekHits}/${weekTotal} <span class="text-sm text-gold-warm">(${weekPercent}%)</span>`
-        : '<span class="text-warm-gray">データなし</span>';
-    }
   </script>
 </body>
 </html>

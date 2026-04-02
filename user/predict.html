@@ -307,7 +307,7 @@
                   <div class="flex items-center justify-center gap-3 text-xl" style="position:relative;z-index:1">
                     ${renderPredictionOrder(currentEstimate.predictedRanks, 'lg')}
                   </div>
-                  <p class="text-center text-sm text-gold-warm mt-3" style="position:relative;z-index:1"><i class="fa-solid fa-bolt mr-1"></i>決まり手: ${currentEstimate.predictedTechnique}</p>
+                  ${currentEstimate.predictedTechnique ? `<p class="text-center text-sm text-gold-warm mt-3" style="position:relative;z-index:1"><i class="fa-solid fa-bolt mr-1"></i>決まり手: ${currentEstimate.predictedTechnique}</p>` : ''}
                 </div>
               </div>
             </div>

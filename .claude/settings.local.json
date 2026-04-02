@@ -82,7 +82,9 @@
       "Bash(curl -s -H 'X-API-Key: ogenIegdRnasl3n2fthtjymthRWFEepwl' 'http://localhost:3000/v1/estimates?date=2026-03-10')",
       "Bash(curl -s 'http://localhost:8080/v1/estimates?date=2026-03-10')",
       "Bash(curl -s -H 'X-API-Key: ogenIegdRnasl3n2fthtjymthRWFEepwl' 'https://api-832917284977.asia-northeast1.run.app/v1/estimates?date=2026-03-10')",
-      "Bash(curl -s -H 'X-API-Key: ogenIegdRnasl3n2fthtjymthRWFEepwl' 'https://api-832917284977.asia-northeast1.run.app/health')"
+      "Bash(curl -s -H 'X-API-Key: ogenIegdRnasl3n2fthtjymthRWFEepwl' 'https://api-832917284977.asia-northeast1.run.app/health')",
+      "Bash(curl -s -H 'X-API-Key: ogenIegdRnasl3n2fthtjymthRWFEepwl' 'https://api-832917284977.asia-northeast1.run.app/v1/estimates?date=2026-04-02')",
+      "Bash(python3 -c \"import sys,json; data=json.load\\(sys.stdin\\)['data']; techniques=set\\(d['predictedTechnique'] for d in data\\); print\\(f'全{len\\(data\\)}件'\\); print\\('決まり手の値:', techniques\\)\")"
     ]
   }
 }

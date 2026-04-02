@@ -209,10 +209,11 @@
               <span class="text-xs text-warm-gray">予想:</span>
               ${renderPredictionOrder(item.prediction, 'sm')}
             </div>
+${item.technique ? `
             <div class="flex items-center gap-2 mt-3">
               <span class="text-xs text-warm-gray">決まり手:</span>
               <span class="text-sm font-medium text-gold-warm"><i class="fa-solid fa-bolt mr-1"></i>${item.technique}</span>
-            </div>
+            </div>` : ''}
             <div class="flex items-center gap-2 mt-3">
               <span class="text-xs text-warm-gray">結果:</span>
               <span class="text-warm-gray/60 text-sm">準備中</span>

@@ -20,12 +20,9 @@
 
     <!-- ページヘッダー -->
     <div class="mb-6">
-      <div class="flex items-center justify-between">
-        <h1 class="text-3xl sm:text-4xl font-heading font-semibold text-charcoal mb-2 tracking-tight">
-          <i class="fa-solid fa-calendar-week text-gold-shine mr-2"></i>今週の予測一覧
-        </h1>
-        <span id="weekly-data-source-badge"></span>
-      </div>
+      <h1 class="text-3xl sm:text-4xl font-heading font-semibold text-charcoal mb-2 tracking-tight">
+        <i class="fa-solid fa-calendar-week text-gold-shine mr-2"></i>今週の予測一覧
+      </h1>
       <p class="text-warm-gray/80 text-sm" id="week-range"></p>
     </div>
 
@@ -104,19 +101,10 @@
         console.warn('[API] estimates取得失敗（ダミーデータで表示）:', e.message);
       }
       selectedStadium = 'all';
-      updateWeeklyDataSourceBadge();
       rebuildStadiumFilter();
       renderCards();
     }
 
-    function updateWeeklyDataSourceBadge() {
-      const badge = document.getElementById('weekly-data-source-badge');
-      if (apiEstimates.length > 0) {
-        badge.innerHTML = '<span class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-status-success-bg text-status-success"><i class="fa-solid fa-satellite-dish mr-1"></i>API</span>';
-      } else {
-        badge.innerHTML = '<span class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-status-warning-bg text-gold"><i class="fa-solid fa-flask mr-1"></i>DEMO</span>';
-      }
-    }
 
     function initWeekRange() {
       const dates = getWeekDates();

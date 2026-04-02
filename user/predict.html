@@ -32,7 +32,7 @@
         <!-- 日付 -->
         <div>
           <label class="block text-xs text-warm-gray mb-1">日付</label>
-          <input type="date" id="race-date" value="2026-02-23"
+          <input type="date" id="race-date"
             class="input-premium text-sm w-full">
         </div>
         <!-- レース場 -->
@@ -53,12 +53,9 @@
 
     <!-- ロジック予測カルーセル -->
     <section class="mb-8">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xs font-semibold uppercase tracking-widest text-warm-gray/80">
-          <i class="fa-solid fa-brain mr-1"></i>予測ロジック
-        </h2>
-        <span id="data-source-badge"></span>
-      </div>
+      <h2 class="text-xs font-semibold uppercase tracking-widest text-warm-gray/80 mb-4">
+        <i class="fa-solid fa-brain mr-1"></i>予測ロジック
+      </h2>
       <div class="relative px-5 sm:px-8">
         <!-- 左矢印 -->
         <button onclick="prevSlide()" class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 sm:-translate-x-5 z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-dark-card text-gold hover:text-cream hover:bg-dark-surface shadow-elevation-2 transition-all duration-400 flex items-center justify-center">
@@ -122,79 +119,123 @@
     let virtualIndex = 1;
     let trackEl, dotsEls;
     let currentEstimate = null; // APIから取得したestimateデータ
+    let dailyEstimates = []; // 当日の全estimateデータ
 
 
-    // APIからestimateを取得して描画を更新
-    async function loadEstimate() {
+    // 当日の全estimatesを取得し、会場・レースタブを再構築
+    async function loadDailyEstimates() {
+      const date = document.getElementById('race-date').value;
+      try {
+        const res = await fetchEstimatesByDate(date);
+        dailyEstimates = res.data || [];
+        console.log('[API] daily estimates loaded:', date, dailyEstimates.length, '件');
+      } catch (e) {
+        dailyEstimates = [];
+        console.warn('[API] daily estimates取得失敗:', e.message);
+      }
+      rebuildStadiumSelect();
+      rebuildRaceTabs();
+      selectCurrentEstimate();
+    }
+
+    // 現在の会場・レース番号からestimateを個別取得して描画
+    async function selectCurrentEstimate() {
       const date = document.getElementById('race-date').value;
       const stadium = document.getElementById('race-stadium').value;
+      const raceCode = buildRaceCode(date, stadium, selectedRace);
       try {
-        const raceCode = buildRaceCode(date, stadium, selectedRace);
-        const estimate = await fetchEstimate(raceCode);
-        currentEstimate = estimate;
-        console.log('[API] estimate loaded:', raceCode, estimate);
+        currentEstimate = await fetchEstimate(raceCode);
+        console.log('[API] estimate loaded:', raceCode, currentEstimate);
       } catch (e) {
         currentEstimate = null;
-        console.warn('[API] estimate取得失敗（ダミーデータで表示）:', e.message);
+        console.warn('[API] estimate取得失敗:', e.message);
       }
-      updateDataSourceBadge();
       initCarousel();
     }
 
-    function updateDataSourceBadge() {
-      const badge = document.getElementById('data-source-badge');
-      if (currentEstimate) {
-        badge.innerHTML = '<span class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-status-success-bg text-status-success"><i class="fa-solid fa-satellite-dish mr-1"></i>API</span>';
-      } else {
-        badge.innerHTML = '<span class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-status-warning-bg text-gold"><i class="fa-solid fa-flask mr-1"></i>DEMO</span>';
+
+    // レース場セレクト再構築（APIデータの会場のみ）
+    function rebuildStadiumSelect() {
+      const select = document.getElementById('race-stadium');
+      const prevValue = select.value;
+      select.innerHTML = '';
+
+      const venues = [...new Set(dailyEstimates.map(e => e.venueCode))].sort();
+
+      if (venues.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '-- データなし --';
+        select.appendChild(opt);
+        return;
       }
+
+      venues.forEach((code, i) => {
+        const num = parseInt(code, 10);
+        const opt = document.createElement('option');
+        opt.value = num;
+        opt.textContent = STADIUMS[num] || code;
+        if (String(num) === prevValue) opt.selected = true;
+        select.appendChild(opt);
+      });
+
+      // 前の選択が残っていなければ先頭を選択
+      if (!venues.includes(String(parseInt(prevValue, 10)).padStart(2, '0'))) {
+        select.selectedIndex = 0;
+      }
+    }
+
+    // レース番号タブ再構築（選択中の会場で存在するレースのみ）
+    function rebuildRaceTabs() {
+      const container = document.getElementById('race-tabs');
+      container.innerHTML = '';
+      const stadium = document.getElementById('race-stadium').value;
+      const venueCode = String(stadium).padStart(2, '0');
+
+      const races = dailyEstimates
+        .filter(e => e.venueCode === venueCode)
+        .map(e => e.raceNumber)
+        .sort((a, b) => a - b);
+
+      if (races.length === 0) return;
+
+      // 選択中のレースがなければ先頭に合わせる
+      if (!races.includes(selectedRace)) {
+        selectedRace = races[0];
+      }
+
+      races.forEach(r => {
+        const btn = document.createElement('button');
+        btn.textContent = r + 'R';
+        btn.className = r === selectedRace
+          ? 'px-3 py-2.5 rounded-lg text-xs font-semibold bg-gold text-charcoal shadow-elevation-1 transition-all duration-600 ease-premium flex-shrink-0'
+          : 'px-3 py-2.5 rounded-lg text-xs font-medium text-warm-gray hover:bg-dark-surface hover:text-charcoal transition-all duration-400 flex-shrink-0';
+        btn.addEventListener('click', () => {
+          selectedRace = r;
+          container.querySelectorAll('button').forEach(b => {
+            b.className = 'px-3 py-2.5 rounded-lg text-xs font-medium text-warm-gray hover:bg-dark-surface hover:text-charcoal transition-all duration-400 flex-shrink-0';
+          });
+          btn.className = 'px-3 py-2.5 rounded-lg text-xs font-semibold bg-gold text-charcoal shadow-elevation-1 transition-all duration-600 ease-premium flex-shrink-0';
+          selectCurrentEstimate();
+        });
+        container.appendChild(btn);
+      });
     }
 
     // 初期化
     document.addEventListener('DOMContentLoaded', function () {
-      initStadiumSelect();
-      initRaceTabs();
-      loadEstimate();
+      document.getElementById('race-date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('race-stadium').addEventListener('change', () => {
+        rebuildRaceTabs();
+        selectCurrentEstimate();
+      });
+      loadDailyEstimates();
       initSwipe();
       initSwipeHint();
     });
 
-    // 日付変更時にAPI再取得
-    document.getElementById('race-date').addEventListener('change', () => loadEstimate());
-
-    // レース場セレクト初期化
-    function initStadiumSelect() {
-      const select = document.getElementById('race-stadium');
-      Object.entries(STADIUMS).forEach(([num, name]) => {
-        const opt = document.createElement('option');
-        opt.value = num;
-        opt.textContent = name;
-        if (num === '3') opt.selected = true;
-        select.appendChild(opt);
-      });
-      select.addEventListener('change', () => loadEstimate());
-    }
-
-    // レース番号タブ初期化
-    function initRaceTabs() {
-      const container = document.getElementById('race-tabs');
-      for (let i = 1; i <= 12; i++) {
-        const btn = document.createElement('button');
-        btn.textContent = i + 'R';
-        btn.className = i === 1
-          ? 'px-3 py-2.5 rounded-lg text-xs font-semibold bg-gold text-charcoal shadow-elevation-1 transition-all duration-600 ease-premium flex-shrink-0'
-          : 'px-3 py-2.5 rounded-lg text-xs font-medium text-warm-gray hover:bg-dark-surface hover:text-charcoal transition-all duration-400 flex-shrink-0';
-        btn.addEventListener('click', () => {
-          selectedRace = i;
-          document.querySelectorAll('#race-tabs button').forEach(b => {
-            b.className = 'px-3 py-2.5 rounded-lg text-xs font-medium text-warm-gray hover:bg-dark-surface hover:text-charcoal transition-all duration-400 flex-shrink-0';
-          });
-          btn.className = 'px-3 py-2.5 rounded-lg text-xs font-semibold bg-gold text-charcoal shadow-elevation-1 transition-all duration-600 ease-premium flex-shrink-0';
-          loadEstimate();
-        });
-        container.appendChild(btn);
-      }
-    }
+    // 日付変更時
+    document.getElementById('race-date').addEventListener('change', () => loadDailyEstimates());
 
     // カルーセル初期化
     function buildSlideHTML(logic, i, isClone) {

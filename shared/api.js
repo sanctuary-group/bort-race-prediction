@@ -43,6 +43,15 @@ async function fetchEstimate(raceCode) {
 }
 
 /**
+ * 単一レース出走表取得
+ * @param {string} raceCode - YYYYMMDDJJRR 形式
+ * @returns {Promise<Object>}
+ */
+async function fetchRace(raceCode) {
+  return apiGet(`/v1/races/${raceCode}`);
+}
+
+/**
  * raceCode 組み立てヘルパー
  * @param {string} date - YYYY-MM-DD
  * @param {number|string} venueCode - 会場番号 (1-24)

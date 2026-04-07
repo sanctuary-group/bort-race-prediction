@@ -89,21 +89,31 @@
     </section>
 
     <!-- 出走表 -->
-    <section class="card-gold-accent mb-8 overflow-hidden">
+    <section class="card-gold-accent mb-8 overflow-hidden" id="race-program-section">
       <div class="px-5 sm:px-7 py-5 flex flex-wrap items-center justify-between gap-2">
         <div class="flex items-center gap-3">
           <h2 class="text-xl font-heading font-semibold tracking-tight text-charcoal">
             <i class="fa-solid fa-table-list mr-2 text-gold/40"></i>出走表
           </h2>
-          <span class="px-2 py-0.5 rounded text-xs font-medium bg-status-purple-bg text-status-purple">準備中</span>
+          <span id="program-status-badge" class="px-2 py-0.5 rounded text-xs font-medium bg-status-purple-bg text-status-purple">読込中</span>
         </div>
+        <div id="program-race-info" class="text-sm text-warm-gray"></div>
       </div>
-      <div class="px-5 sm:px-7 py-12 flex flex-col items-center justify-center text-center">
+      <!-- 気象情報 -->
+      <div id="program-weather" class="hidden px-5 sm:px-7 py-3" style="border-top: 1px solid var(--border-gold-accent)">
+        <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center text-xs"></div>
+      </div>
+      <!-- 出走表テーブル -->
+      <div id="program-table-wrapper" class="hidden overflow-x-auto" style="border-top: 1px solid var(--border-gold-accent)">
+        <table class="table-premium w-full" style="min-width: 700px" id="program-table"></table>
+      </div>
+      <!-- データなし -->
+      <div id="program-empty" class="hidden px-5 sm:px-7 py-12 flex flex-col items-center justify-center text-center">
         <div class="w-16 h-16 rounded-full bg-dark-surface/80 flex items-center justify-center mb-4">
           <i class="fa-solid fa-users text-gold/40 text-2xl"></i>
         </div>
-        <h4 class="text-base font-semibold text-charcoal mb-2">出走表は準備中です</h4>
-        <p class="text-sm text-warm-gray max-w-xs">選手情報・モーター成績等の表示は今後のアップデートで対応予定です。</p>
+        <h4 class="text-base font-semibold text-charcoal mb-2">出走表データなし</h4>
+        <p class="text-sm text-warm-gray max-w-xs">この日付・レース場の出走表がありません。開催日・会場を変更してください。</p>
       </div>
     </section>
 
@@ -120,6 +130,7 @@
     let trackEl, dotsEls;
     let currentEstimate = null; // APIから取得したestimateデータ
     let dailyEstimates = []; // 当日の全estimateデータ
+    let currentRaceData = null; // APIから取得した出走表データ
 
 
     // 当日の全estimatesを取得し、会場・レースタブを再構築
@@ -151,6 +162,137 @@
         console.warn('[API] estimate取得失敗:', e.message);
       }
       initCarousel();
+      loadRaceProgram();
+    }
+
+
+    // 出走表を取得して描画
+    async function loadRaceProgram() {
+      const date = document.getElementById('race-date').value;
+      const stadium = document.getElementById('race-stadium').value;
+      const raceCode = buildRaceCode(date, stadium, selectedRace);
+      try {
+        currentRaceData = await fetchRace(raceCode);
+        console.log('[API] race loaded:', raceCode);
+      } catch (e) {
+        currentRaceData = null;
+        console.warn('[API] race取得失敗:', e.message);
+      }
+      renderRaceProgram();
+    }
+
+    function renderRaceProgram() {
+      const badge = document.getElementById('program-status-badge');
+      const raceInfo = document.getElementById('program-race-info');
+      const weatherEl = document.getElementById('program-weather');
+      const tableWrapper = document.getElementById('program-table-wrapper');
+      const empty = document.getElementById('program-empty');
+
+      if (!currentRaceData) {
+        badge.className = 'px-2 py-0.5 rounded text-xs font-medium bg-status-warning-bg text-gold';
+        badge.textContent = 'データなし';
+        raceInfo.innerHTML = '';
+        weatherEl.classList.add('hidden');
+        tableWrapper.classList.add('hidden');
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      // ステータスバッジ
+      badge.className = 'px-2 py-0.5 rounded text-xs font-medium bg-status-success-bg text-status-success';
+      badge.textContent = currentRaceData.raceName || '出走表';
+
+      // レース情報
+      const deadline = currentRaceData.deadlineAt
+        ? new Date(currentRaceData.deadlineAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+        : '';
+      raceInfo.innerHTML = `
+        <span>${currentRaceData.venueName || ''} ${currentRaceData.raceNumber}R</span>
+        ${currentRaceData.seriesDayLabel ? `<span class="ml-2 text-warm-gray/60">${currentRaceData.seriesDayLabel}</span>` : ''}
+        ${deadline ? `<span class="ml-2"><i class="fa-regular fa-clock mr-1"></i>締切 ${deadline}</span>` : ''}
+      `;
+
+      // 気象情報
+      const bi = currentRaceData.beforeInfo;
+      if (bi && bi.weatherCode != null) {
+        const weather = getWeatherIcon(bi.weatherCode);
+        const wind = getWindDirectionLabel(bi.windDirectionCode);
+        weatherEl.querySelector('.grid').innerHTML = `
+          <div class="bg-dark-surface/50 rounded-lg px-3 py-2"><i class="fa-solid ${weather.icon} text-gold/60 mr-1"></i>${weather.label}</div>
+          <div class="bg-dark-surface/50 rounded-lg px-3 py-2"><i class="fa-solid fa-wind text-gold/60 mr-1"></i>${wind} ${bi.windSpeedMps ?? '-'}m</div>
+          <div class="bg-dark-surface/50 rounded-lg px-3 py-2"><i class="fa-solid fa-water text-gold/60 mr-1"></i>波高 ${bi.waveHeightCm ?? '-'}cm</div>
+          <div class="bg-dark-surface/50 rounded-lg px-3 py-2"><i class="fa-solid fa-temperature-half text-gold/60 mr-1"></i>気温 ${bi.airTempC ?? '-'}℃</div>
+          <div class="bg-dark-surface/50 rounded-lg px-3 py-2"><i class="fa-solid fa-droplet text-gold/60 mr-1"></i>水温 ${bi.waterTempC ?? '-'}℃</div>
+          <div class="bg-dark-surface/50 rounded-lg px-3 py-2"><i class="fa-solid fa-ruler-horizontal text-gold/60 mr-1"></i>${currentRaceData.distanceMeters ?? '-'}m</div>
+        `;
+        weatherEl.classList.remove('hidden');
+      } else {
+        weatherEl.classList.add('hidden');
+      }
+
+      // 出走表テーブル
+      if (currentRaceData.entries?.length) {
+        renderEntriesTable(currentRaceData.entries);
+        tableWrapper.classList.remove('hidden');
+        empty.classList.add('hidden');
+      } else {
+        tableWrapper.classList.add('hidden');
+        empty.classList.remove('hidden');
+      }
+    }
+
+    function renderEntriesTable(entries) {
+      const table = document.getElementById('program-table');
+      const thead = `
+        <thead>
+          <tr>
+            <th class="w-12 text-center">枠</th>
+            <th class="min-w-[120px]">選手</th>
+            <th class="min-w-[80px]">支部/年齢</th>
+            <th class="min-w-[70px] text-right">全国</th>
+            <th class="min-w-[70px] text-right">当地</th>
+            <th class="min-w-[65px] text-right">モーター</th>
+            <th class="min-w-[65px] text-right">ボート</th>
+            <th class="min-w-[55px] text-right">展示T</th>
+            <th class="min-w-[45px] text-right">チルト</th>
+          </tr>
+        </thead>`;
+
+      const tbody = entries.map(e => {
+        const classNum = racerClassToNumber(e.racerClass);
+        const classStyle = getClassStyle(classNum);
+        const exTime = e.beforeInfo?.exhibitionTime != null ? e.beforeInfo.exhibitionTime.toFixed(2) : '-';
+        const tilt = e.beforeInfo?.tilt != null ? e.beforeInfo.tilt.toFixed(1) : '-';
+
+        return `<tr>
+          <td class="text-center">${getBoatBadge(e.lane, 'sm')}</td>
+          <td>
+            <div class="font-semibold text-sm text-charcoal">${e.racerName}</div>
+            <div class="text-xs text-warm-gray">${e.racerId} <span class="${classStyle}">${e.racerClass}</span></div>
+          </td>
+          <td class="text-xs text-warm-gray">${e.branch}<br>${e.age}歳 / ${e.weightKg}kg</td>
+          <td class="text-right text-sm">
+            <span class="font-mono text-charcoal">${e.national?.winRate ?? '-'}</span>
+            <br><span class="text-xs text-warm-gray">${e.national?.twoRenRate ?? '-'}%</span>
+          </td>
+          <td class="text-right text-sm">
+            <span class="font-mono text-charcoal">${e.local?.winRate ?? '-'}</span>
+            <br><span class="text-xs text-warm-gray">${e.local?.twoRenRate ?? '-'}%</span>
+          </td>
+          <td class="text-right text-xs">
+            <span class="text-charcoal">${e.motor?.number ?? '-'}</span>
+            <br><span class="text-warm-gray">${e.motor?.twoRenRate ?? '-'}%</span>
+          </td>
+          <td class="text-right text-xs">
+            <span class="text-charcoal">${e.boat?.number ?? '-'}</span>
+            <br><span class="text-warm-gray">${e.boat?.twoRenRate ?? '-'}%</span>
+          </td>
+          <td class="text-right font-mono text-sm">${exTime}</td>
+          <td class="text-right font-mono text-sm">${tilt}</td>
+        </tr>`;
+      }).join('');
+
+      table.innerHTML = thead + `<tbody>${tbody}</tbody>`;
     }
 
 

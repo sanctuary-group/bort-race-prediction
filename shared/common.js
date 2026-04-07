@@ -64,6 +64,35 @@ function getClassStyle(classNumber) {
   }
 }
 
+// 級別文字列 → 数値変換（getClassStyle用）
+function racerClassToNumber(racerClass) {
+  const map = { 'A1': 1, 'A2': 2, 'B1': 3, 'B2': 4 };
+  return map[racerClass] || 4;
+}
+
+// 天候コード → アイコン・ラベル変換
+function getWeatherIcon(weatherCode) {
+  const map = {
+    1: { icon: 'fa-sun', label: '晴' },
+    2: { icon: 'fa-cloud-sun', label: '曇' },
+    3: { icon: 'fa-cloud-rain', label: '雨' },
+    4: { icon: 'fa-snowflake', label: '雪' },
+    5: { icon: 'fa-smog', label: '霧' },
+  };
+  return map[weatherCode] || { icon: 'fa-question', label: '不明' };
+}
+
+// 風向コード → ラベル変換
+function getWindDirectionLabel(code) {
+  const labels = {
+    1: '北', 2: '北北東', 3: '北東', 4: '東北東',
+    5: '東', 6: '東南東', 7: '南東', 8: '南南東',
+    9: '南', 10: '南南西', 11: '南西', 12: '西南西',
+    13: '西', 14: '西北西', 15: '北西', 16: '北北西',
+  };
+  return labels[code] || '不明';
+}
+
 // ステータスバッジ生成
 function getStatusBadge(status) {
   const styles = {

@@ -84,7 +84,15 @@
       "Bash(curl -s -H 'X-API-Key: ogenIegdRnasl3n2fthtjymthRWFEepwl' 'https://api-832917284977.asia-northeast1.run.app/v1/estimates?date=2026-03-10')",
       "Bash(curl -s -H 'X-API-Key: ogenIegdRnasl3n2fthtjymthRWFEepwl' 'https://api-832917284977.asia-northeast1.run.app/health')",
       "Bash(curl -s -H 'X-API-Key: ogenIegdRnasl3n2fthtjymthRWFEepwl' 'https://api-832917284977.asia-northeast1.run.app/v1/estimates?date=2026-04-02')",
-      "Bash(python3 -c \"import sys,json; data=json.load\\(sys.stdin\\)['data']; techniques=set\\(d['predictedTechnique'] for d in data\\); print\\(f'全{len\\(data\\)}件'\\); print\\('決まり手の値:', techniques\\)\")"
+      "Bash(python3 -c \"import sys,json; data=json.load\\(sys.stdin\\)['data']; techniques=set\\(d['predictedTechnique'] for d in data\\); print\\(f'全{len\\(data\\)}件'\\); print\\('決まり手の値:', techniques\\)\")",
+      "Bash(python3 -c \"import sys,json; data=json.load\\(sys.stdin\\)['data']; techniques=set\\(d['predictedTechnique'] for d in data\\); print\\(f'3/10: 全{len\\(data\\)}件, 決まり手:', techniques\\)\")",
+      "Bash(curl -s -H 'X-API-Key: ogenIegdRnasl3n2fthtjymthRWFEepwl' 'https://api-832917284977.asia-northeast1.run.app/v1/estimates?date=2026-03-31')",
+      "Bash(python3 -c \"import sys,json; data=json.load\\(sys.stdin\\)['data']; techniques=set\\(d['predictedTechnique'] for d in data\\); print\\(f'3/31: 全{len\\(data\\)}件, 決まり手:', techniques\\)\")",
+      "Bash(curl -s -H 'X-API-Key: ogenIegdRnasl3n2fthtjymthRWFEepwl' 'https://api-832917284977.asia-northeast1.run.app/v1/estimates?date=2026-04-01')",
+      "Bash(python3 -c \"import sys,json; data=json.load\\(sys.stdin\\)['data']; techniques=set\\(d['predictedTechnique'] for d in data\\); print\\(f'4/1: 全{len\\(data\\)}件, 決まり手:', techniques\\)\")",
+      "Bash(curl -s -H 'X-API-Key: ogenIegdRnasl3n2fthtjymthRWFEepwl' 'https://api-832917284977.asia-northeast1.run.app/v1/races?date=2026-04-02')",
+      "Bash(curl -s -H 'X-API-Key: ogenIegdRnasl3n2fthtjymthRWFEepwl' 'https://api-832917284977.asia-northeast1.run.app/v1/races/202604020101')",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('entries:', len\\(d.get\\('entries',[]\\)\\), 'beforeInfo:', bool\\(d.get\\('beforeInfo'\\)\\), 'estimate:', bool\\(d.get\\('estimate'\\)\\)\\)\")"
     ]
   }
 }

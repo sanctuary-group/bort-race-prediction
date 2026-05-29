@@ -1,5 +1,5 @@
 // ========================================
-// APIクライアント
+// APIクライアント (V2)
 // ========================================
 
 const API_BASE_URL = '';
@@ -30,7 +30,7 @@ async function checkHealth() {
  * @returns {Promise<{data: Array}>}
  */
 async function fetchEstimatesByDate(date) {
-  return apiGet(`/v1/estimates?date=${date}`);
+  return apiGet(`/v2/estimates?date=${date}`);
 }
 
 /**
@@ -39,7 +39,16 @@ async function fetchEstimatesByDate(date) {
  * @returns {Promise<Object>}
  */
 async function fetchEstimate(raceCode) {
-  return apiGet(`/v1/estimates/${raceCode}`);
+  return apiGet(`/v2/estimates/${raceCode}`);
+}
+
+/**
+ * 指定日の全レース出走表一覧（V2 で新規追加）
+ * @param {string} date - YYYY-MM-DD
+ * @returns {Promise<{data: Array}>}
+ */
+async function fetchRacesByDate(date) {
+  return apiGet(`/v2/races?date=${date}`);
 }
 
 /**
@@ -48,7 +57,7 @@ async function fetchEstimate(raceCode) {
  * @returns {Promise<Object>}
  */
 async function fetchRace(raceCode) {
-  return apiGet(`/v1/races/${raceCode}`);
+  return apiGet(`/v2/races/${raceCode}`);
 }
 
 /**
@@ -63,4 +72,31 @@ function buildRaceCode(date, venueCode, raceNumber) {
   const v = String(venueCode).padStart(2, '0');
   const r = String(raceNumber).padStart(2, '0');
   return `${d}${v}${r}`;
+}
+
+/**
+ * V2Estimate の predictions[] から logicKey に対応するものを取り出す
+ * @param {Object|null} estimate
+ * @param {'A'|'B'|'C'} logicKey
+ * @returns {Object|null}
+ */
+function pickPrediction(estimate, logicKey) {
+  if (!estimate || !Array.isArray(estimate.predictions)) return null;
+  return estimate.predictions.find(p => p.logicKey === logicKey) ?? null;
+}
+
+/**
+ * 日付から races と estimates を同時取得し raceCode で結合した一覧を返す
+ * @param {string} date - YYYY-MM-DD
+ * @returns {Promise<{races: Array, estimates: Array, estByCode: Map<string, Object>}>}
+ */
+async function fetchDailyRaceList(date) {
+  const [racesRes, estimatesRes] = await Promise.all([
+    fetchRacesByDate(date).catch(() => ({ data: [] })),
+    fetchEstimatesByDate(date).catch(() => ({ data: [] })),
+  ]);
+  const races = racesRes.data || [];
+  const estimates = estimatesRes.data || [];
+  const estByCode = new Map(estimates.map(e => [e.raceCode, e]));
+  return { races, estimates, estByCode };
 }

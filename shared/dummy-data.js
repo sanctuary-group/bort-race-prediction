@@ -70,11 +70,11 @@ const DUMMY_PREDICTIONS = {
 // ロジック一覧ダミーデータ
 const DUMMY_LOGICS = [
   { id: 'A', name: 'ロジックA', description: '勝率・連対率重視の安定型', accuracy: 68.5, status: '有効',
-    api_endpoint: 'https://api.bp-engine.com/v1/predict-stable', api_key: 'sk-bp-a1b2c3d4e5f6g7h8' },
+    api_endpoint: 'https://api.bp-engine.com/v2/predict-stable', api_key: 'sk-bp-a1b2c3d4e5f6g7h8' },
   { id: 'B', name: 'ロジックB', description: 'モーター成績重視の穴狙い型', accuracy: 42.3, status: '有効',
-    api_endpoint: 'https://api.bp-engine.com/v1/predict-risk', api_key: 'sk-bp-i9j0k1l2m3n4o5p6' },
+    api_endpoint: 'https://api.bp-engine.com/v2/predict-risk', api_key: 'sk-bp-i9j0k1l2m3n4o5p6' },
   { id: 'C', name: 'ロジックC', description: 'スタートタイミング+展示重視', accuracy: 55.1, status: 'テスト中',
-    api_endpoint: 'https://api.bp-engine.com/v1/predict-exhibition', api_key: 'sk-bp-q7r8s9t0u1v2w3x4' }
+    api_endpoint: 'https://api.bp-engine.com/v2/predict-exhibition', api_key: 'sk-bp-q7r8s9t0u1v2w3x4' }
 ];
 
 // 今週の予測ダミーデータ

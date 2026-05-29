@@ -14,7 +14,7 @@ if (!API_KEY) {
   process.exit(1);
 }
 
-// /v1/*, /health をバックエンドAPIへプロキシ
+// /v2/*, /health をバックエンドAPIへプロキシ
 function proxyToApi(req, res) {
   const target = new URL(API_TARGET);
   const options = {
@@ -42,7 +42,7 @@ function proxyToApi(req, res) {
   req.pipe(proxyReq);
 }
 
-app.use('/v1', proxyToApi);
+app.use('/v2', proxyToApi);
 app.use('/health', proxyToApi);
 
 // 静的ファイル配信

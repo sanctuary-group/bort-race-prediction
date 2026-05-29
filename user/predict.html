@@ -128,55 +128,74 @@
     let currentSlide = 0;
     let virtualIndex = 1;
     let trackEl, dotsEls;
-    let currentEstimate = null; // APIから取得したestimateデータ
-    let dailyEstimates = []; // 当日の全estimateデータ
-    let currentRaceData = null; // APIから取得した出走表データ
+    let currentEstimate = null;       // 選択中レースの V2Estimate
+    let currentRaceData = null;       // 選択中レースの V2Race
+    let dailyEstimates = [];          // 当日の V2Estimate[]
+    let dailyRaces = [];              // 当日の V2Race[]（会場・レースタブのソース）
+    let estByCode = new Map();        // raceCode -> V2Estimate
+    let raceByCode = new Map();       // raceCode -> V2Race
 
 
-    // 当日の全estimatesを取得し、会場・レースタブを再構築
-    async function loadDailyEstimates() {
+    // 当日の races / estimates を並列取得し、会場・レースタブを再構築
+    async function loadDailyData() {
       const date = document.getElementById('race-date').value;
-      try {
-        const res = await fetchEstimatesByDate(date);
-        dailyEstimates = res.data || [];
-        console.log('[API] daily estimates loaded:', date, dailyEstimates.length, '件');
-      } catch (e) {
-        dailyEstimates = [];
-        console.warn('[API] daily estimates取得失敗:', e.message);
-      }
+      const result = await fetchDailyRaceList(date);
+      dailyRaces = result.races;
+      dailyEstimates = result.estimates;
+      estByCode = result.estByCode;
+      raceByCode = new Map(dailyRaces.map(r => [r.raceCode, r]));
+      console.log('[API] daily data loaded:', date, 'races=', dailyRaces.length, 'estimates=', dailyEstimates.length);
       rebuildStadiumSelect();
       rebuildRaceTabs();
       selectCurrentEstimate();
     }
 
-    // 現在の会場・レース番号からestimateを個別取得して描画
+    // 現在の会場・レース番号から estimate を解決して描画
     async function selectCurrentEstimate() {
       const date = document.getElementById('race-date').value;
       const stadium = document.getElementById('race-stadium').value;
-      const raceCode = buildRaceCode(date, stadium, selectedRace);
-      try {
-        currentEstimate = await fetchEstimate(raceCode);
-        console.log('[API] estimate loaded:', raceCode, currentEstimate);
-      } catch (e) {
+      if (!stadium) {
         currentEstimate = null;
-        console.warn('[API] estimate取得失敗:', e.message);
+        initCarousel();
+        loadRaceProgram();
+        return;
+      }
+      const raceCode = buildRaceCode(date, stadium, selectedRace);
+      // まずは当日キャッシュから引く（タブ切替の度に API を叩かない）
+      if (estByCode.has(raceCode)) {
+        currentEstimate = estByCode.get(raceCode);
+      } else {
+        try {
+          currentEstimate = await fetchEstimate(raceCode);
+        } catch (e) {
+          currentEstimate = null;
+          console.warn('[API] estimate取得失敗:', raceCode, e.message);
+        }
       }
       initCarousel();
       loadRaceProgram();
     }
 
 
-    // 出走表を取得して描画
+    // 出走表を解決して描画
     async function loadRaceProgram() {
       const date = document.getElementById('race-date').value;
       const stadium = document.getElementById('race-stadium').value;
-      const raceCode = buildRaceCode(date, stadium, selectedRace);
-      try {
-        currentRaceData = await fetchRace(raceCode);
-        console.log('[API] race loaded:', raceCode);
-      } catch (e) {
+      if (!stadium) {
         currentRaceData = null;
-        console.warn('[API] race取得失敗:', e.message);
+        renderRaceProgram();
+        return;
+      }
+      const raceCode = buildRaceCode(date, stadium, selectedRace);
+      if (raceByCode.has(raceCode)) {
+        currentRaceData = raceByCode.get(raceCode);
+      } else {
+        try {
+          currentRaceData = await fetchRace(raceCode);
+        } catch (e) {
+          currentRaceData = null;
+          console.warn('[API] race取得失敗:', raceCode, e.message);
+        }
       }
       renderRaceProgram();
     }
@@ -187,6 +206,8 @@
       const weatherEl = document.getElementById('program-weather');
       const tableWrapper = document.getElementById('program-table-wrapper');
       const empty = document.getElementById('program-empty');
+      const emptyTitle = empty.querySelector('h4');
+      const emptyDesc = empty.querySelector('p');
 
       if (!currentRaceData) {
         badge.className = 'px-2 py-0.5 rounded text-xs font-medium bg-status-warning-bg text-gold';
@@ -194,13 +215,20 @@
         raceInfo.innerHTML = '';
         weatherEl.classList.add('hidden');
         tableWrapper.classList.add('hidden');
+        emptyTitle.textContent = '出走表データなし';
+        emptyDesc.textContent = 'この日付・レース場の出走表がありません。開催日・会場を変更してください。';
         empty.classList.remove('hidden');
         return;
       }
 
+      // meta.availability.programs を見て準備中表示の切り替え
+      const programsMissing = currentRaceData.meta?.availability?.programs === 'missing';
+
       // ステータスバッジ
-      badge.className = 'px-2 py-0.5 rounded text-xs font-medium bg-status-success-bg text-status-success';
-      badge.textContent = currentRaceData.raceName || '出走表';
+      badge.className = programsMissing
+        ? 'px-2 py-0.5 rounded text-xs font-medium bg-status-purple-bg text-status-purple'
+        : 'px-2 py-0.5 rounded text-xs font-medium bg-status-success-bg text-status-success';
+      badge.textContent = programsMissing ? '準備中' : (currentRaceData.raceName || '出走表');
 
       // レース情報
       const deadline = currentRaceData.deadlineAt
@@ -231,12 +259,19 @@
       }
 
       // 出走表テーブル
-      if (currentRaceData.entries?.length) {
+      if (programsMissing) {
+        tableWrapper.classList.add('hidden');
+        emptyTitle.textContent = '出走表データ準備中';
+        emptyDesc.textContent = 'この日付・レース場の出走表は準備中です。締切が近づくと表示されます。';
+        empty.classList.remove('hidden');
+      } else if (currentRaceData.entries?.length) {
         renderEntriesTable(currentRaceData.entries);
         tableWrapper.classList.remove('hidden');
         empty.classList.add('hidden');
       } else {
         tableWrapper.classList.add('hidden');
+        emptyTitle.textContent = '出走表データなし';
+        emptyDesc.textContent = 'この日付・レース場の出走表がありません。開催日・会場を変更してください。';
         empty.classList.remove('hidden');
       }
     }
@@ -263,14 +298,17 @@
         const classStyle = getClassStyle(classNum);
         const exTime = e.beforeInfo?.exhibitionTime != null ? e.beforeInfo.exhibitionTime.toFixed(2) : '-';
         const tilt = e.beforeInfo?.tilt != null ? e.beforeInfo.tilt.toFixed(1) : '-';
+        const weight = e.weightKg ?? e.beforeInfo?.currentWeightKg ?? '-';
+        const branch = e.branch ?? '-';
+        const age = e.age != null ? `${e.age}歳` : '-';
 
         return `<tr>
           <td class="text-center">${getBoatBadge(e.lane, 'sm')}</td>
           <td>
-            <div class="font-semibold text-sm text-charcoal">${e.racerName}</div>
-            <div class="text-xs text-warm-gray">${e.racerId} <span class="${classStyle}">${e.racerClass}</span></div>
+            <div class="font-semibold text-sm text-charcoal">${e.racerName ?? '-'}</div>
+            <div class="text-xs text-warm-gray">${e.racerId ?? ''} <span class="${classStyle}">${e.racerClass ?? ''}</span></div>
           </td>
-          <td class="text-xs text-warm-gray">${e.branch}<br>${e.age}歳 / ${e.weightKg}kg</td>
+          <td class="text-xs text-warm-gray">${branch}<br>${age} / ${weight}kg</td>
           <td class="text-right text-sm">
             <span class="font-mono text-charcoal">${e.national?.winRate ?? '-'}</span>
             <br><span class="text-xs text-warm-gray">${e.national?.twoRenRate ?? '-'}%</span>
@@ -296,13 +334,20 @@
     }
 
 
-    // レース場セレクト再構築（APIデータの会場のみ）
+    // レース場セレクト再構築（dailyRaces をソースに）
     function rebuildStadiumSelect() {
       const select = document.getElementById('race-stadium');
       const prevValue = select.value;
       select.innerHTML = '';
 
-      const venues = [...new Set(dailyEstimates.map(e => e.venueCode))].sort();
+      // venueCode をユニーク化（API の venueName を優先表示）
+      const venueMap = new Map();
+      dailyRaces.forEach(r => {
+        if (!venueMap.has(r.venueCode)) {
+          venueMap.set(r.venueCode, r.venueName);
+        }
+      });
+      const venues = [...venueMap.keys()].sort();
 
       if (venues.length === 0) {
         const opt = document.createElement('option');
@@ -312,11 +357,11 @@
         return;
       }
 
-      venues.forEach((code, i) => {
+      venues.forEach((code) => {
         const num = parseInt(code, 10);
         const opt = document.createElement('option');
         opt.value = num;
-        opt.textContent = STADIUMS[num] || code;
+        opt.textContent = venueMap.get(code) || STADIUMS[num] || code;
         if (String(num) === prevValue) opt.selected = true;
         select.appendChild(opt);
       });
@@ -327,16 +372,16 @@
       }
     }
 
-    // レース番号タブ再構築（選択中の会場で存在するレースのみ）
+    // レース番号タブ再構築（dailyRaces から選択中会場のレース番号を抽出）
     function rebuildRaceTabs() {
       const container = document.getElementById('race-tabs');
       container.innerHTML = '';
       const stadium = document.getElementById('race-stadium').value;
       const venueCode = String(stadium).padStart(2, '0');
 
-      const races = dailyEstimates
-        .filter(e => e.venueCode === venueCode)
-        .map(e => e.raceNumber)
+      const races = dailyRaces
+        .filter(r => r.venueCode === venueCode)
+        .map(r => r.raceNumber)
         .sort((a, b) => a - b);
 
       if (races.length === 0) return;
@@ -371,48 +416,36 @@
         rebuildRaceTabs();
         selectCurrentEstimate();
       });
-      loadDailyEstimates();
+      loadDailyData();
       initSwipe();
       initSwipeHint();
     });
 
     // 日付変更時
-    document.getElementById('race-date').addEventListener('change', () => loadDailyEstimates());
+    document.getElementById('race-date').addEventListener('change', () => loadDailyData());
 
     // カルーセル初期化
     function buildSlideHTML(logic, i, isClone) {
-      // ロジックB, C は「準備中」カードを表示
-      if (logic.id !== 'A') {
-        return `
-          <div class="w-full flex-shrink-0">
-            <div class="card-gold-accent overflow-hidden">
-              <div class="px-5 sm:px-7 py-5" style="border-bottom: 1px solid var(--border-gold-accent)">
-                <div class="flex items-center justify-between mb-2">
-                  <h3 class="text-lg font-bold text-charcoal">${logic.name}<span class="text-sm font-normal text-warm-gray ml-2">${DUMMY_PREDICTIONS[logic.id].logic_subtitle}</span></h3>
-                  <span class="px-2 py-0.5 rounded text-xs font-medium bg-status-purple-bg text-status-purple">準備中</span>
-                </div>
-                <p class="text-sm text-warm-gray">${logic.description}</p>
-              </div>
-              <div class="px-5 sm:px-7 py-16 flex flex-col items-center justify-center text-center">
-                <div class="w-20 h-20 rounded-full bg-dark-surface/80 flex items-center justify-center mb-5">
-                  <i class="fa-solid fa-flask text-gold/40 text-3xl"></i>
-                </div>
-                <h4 class="text-lg font-semibold text-charcoal mb-2">Coming Soon</h4>
-                <p class="text-sm text-warm-gray max-w-xs">独自予測モデルを構築中です。次期アップデートで提供予定です。</p>
-              </div>
-            </div>
-          </div>
-        `;
-      }
+      const prediction = pickPrediction(currentEstimate, logic.id);
+      const displayName = prediction?.logicName || logic.name;
+      const displaySubtitle = DUMMY_PREDICTIONS[logic.id]?.logic_subtitle || '';
 
-      // ロジックA: APIデータがなければ準備中
-      if (!currentEstimate) {
+      // 予測がない場合
+      // - currentEstimate 自体が null  → 「予測データなし」
+      // - currentEstimate はあるが該当 logicKey なし → 「このレースには未提供」
+      if (!prediction) {
+        const isMissingAll = !currentEstimate;
+        const heading = isMissingAll ? '予測データなし' : 'このレースには未提供';
+        const message = isMissingAll
+          ? 'この日付・レース場の予測データがありません。開催日・会場を変更してください。'
+          : 'このレースに対する当ロジックの予測は提供されていません。';
+
         return `
           <div class="w-full flex-shrink-0">
             <div class="card-gold-accent overflow-hidden">
               <div class="px-5 sm:px-7 py-5" style="border-bottom: 1px solid var(--border-gold-accent)">
                 <div class="flex items-center justify-between mb-2">
-                  <h3 class="text-lg font-bold text-charcoal">${logic.name}<span class="text-sm font-normal text-warm-gray ml-2">${DUMMY_PREDICTIONS[logic.id].logic_subtitle}</span></h3>
+                  <h3 class="text-lg font-bold text-charcoal">${displayName}<span class="text-sm font-normal text-warm-gray ml-2">${displaySubtitle}</span></h3>
                   <span class="px-2 py-0.5 rounded text-xs font-medium bg-status-warning-bg text-gold">データなし</span>
                 </div>
                 <p class="text-sm text-warm-gray">${logic.description}</p>
@@ -421,8 +454,8 @@
                 <div class="w-20 h-20 rounded-full bg-dark-surface/80 flex items-center justify-center mb-5">
                   <i class="fa-solid fa-calendar-xmark text-gold/40 text-3xl"></i>
                 </div>
-                <h4 class="text-lg font-semibold text-charcoal mb-2">予測データなし</h4>
-                <p class="text-sm text-warm-gray max-w-xs">この日付・レース場の予測データがありません。開催日・会場を変更してください。</p>
+                <h4 class="text-lg font-semibold text-charcoal mb-2">${heading}</h4>
+                <p class="text-sm text-warm-gray max-w-xs">${message}</p>
               </div>
             </div>
           </div>
@@ -435,7 +468,7 @@
               <!-- ロジック概要 -->
               <div class="px-5 sm:px-7 py-5" style="border-bottom: 1px solid var(--border-gold-accent)">
                 <div class="flex items-center justify-between mb-2">
-                  <h3 class="text-lg font-bold text-charcoal">${logic.name}<span class="text-sm font-normal text-warm-gray ml-2">${DUMMY_PREDICTIONS[logic.id].logic_subtitle}</span></h3>
+                  <h3 class="text-lg font-bold text-charcoal">${displayName}<span class="text-sm font-normal text-warm-gray ml-2">${displaySubtitle}</span></h3>
                   <span class="px-2 py-0.5 rounded text-xs font-medium bg-status-success-bg text-status-success">有効</span>
                 </div>
                 <p class="text-sm text-warm-gray mb-3">${logic.description}</p>
@@ -447,9 +480,9 @@
                   <div class="prediction-sparkles"></div>
                   <p class="text-xs font-semibold uppercase tracking-widest text-warm-gray/80 mb-3" style="position:relative;z-index:1"><i class="fa-solid fa-trophy text-gold-shine mr-1.5"></i>予想着順</p>
                   <div class="flex items-center justify-center gap-3 text-xl" style="position:relative;z-index:1">
-                    ${renderPredictionOrder(currentEstimate.predictedRanks, 'lg')}
+                    ${renderPredictionOrder(prediction.predictedRanks, 'lg')}
                   </div>
-                  ${currentEstimate.predictedTechnique ? `<p class="text-center text-sm text-gold-warm mt-3" style="position:relative;z-index:1"><i class="fa-solid fa-bolt mr-1"></i>決まり手: ${currentEstimate.predictedTechnique}</p>` : ''}
+                  ${prediction.predictedTechnique ? `<p class="text-center text-sm text-gold-warm mt-3" style="position:relative;z-index:1"><i class="fa-solid fa-bolt mr-1"></i>決まり手: ${prediction.predictedTechnique}</p>` : ''}
                 </div>
               </div>
             </div>

@@ -173,12 +173,15 @@
     }
 
     function renderCards() {
-      let items = apiEstimates.map(est => ({
-        stadium: parseInt(est.venueCode, 10),
-        race: est.raceNumber,
-        prediction: est.predictedRanks,
-        technique: est.predictedTechnique,
-      }));
+      let items = apiEstimates.map(est => {
+        const predA = pickPrediction(est, 'A');
+        return {
+          stadium: parseInt(est.venueCode, 10),
+          race: est.raceNumber,
+          prediction: predA?.predictedRanks ?? null,
+          technique: predA?.predictedTechnique ?? null,
+        };
+      }).filter(item => item.prediction);
 
       if (selectedStadium !== 'all') {
         items = items.filter(w => w.stadium === Number(selectedStadium));
